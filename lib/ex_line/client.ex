@@ -1,0 +1,117 @@
+defmodule ExLine.Client do
+  @moduledoc """
+  Holds the Messaging API credentials and HTTP configuration as a plain value.
+
+  A client is **constructed and passed per call** — the SDK never owns a global
+  registry, so multi-channel / multi-tenant apps simply build the right client
+  for each request:
+
+      client = ExLine.Client.new(access_token: provider.message_channel_access_token)
+      ExLine.Messaging.push(client, user_id, message)
+
+  For the single-channel case, `from_env/1` reads a default from application config.
+
+  Note: the webhook channel **secret** is intentionally *not* held here — it
+  belongs to a different trust boundary and is passed directly to
+  `ExLine.Webhook.Signature.valid?/3`.
+  """
+
+  alias ExLine.Error
+
+  @enforce_keys [:access_token]
+  defstruct access_token: nil,
+            channel_id: nil,
+            adapter: ExLine.Client.Req,
+            base_url: "https://api.line.me",
+            data_url: "https://api-data.line.me",
+            retry: []
+
+  @type t :: %__MODULE__{
+          access_token: String.t(),
+          channel_id: String.t() | nil,
+          adapter: module(),
+          base_url: String.t(),
+          data_url: String.t(),
+          retry: keyword()
+        }
+
+  @doc """
+  Builds a client from a keyword list or map.
+
+      iex> client = ExLine.Client.new(access_token: "tok")
+      iex> client.access_token
+      "tok"
+      iex> client.base_url
+      "https://api.line.me"
+  """
+  @spec new(keyword() | map()) :: t()
+  def new(opts), do: struct!(__MODULE__, opts)
+
+  @doc """
+  Builds a client from application config (single-channel convenience).
+
+      config :ex_line, access_token: "...", channel_id: "..."
+  """
+  @spec from_env(atom()) :: t()
+  def from_env(app \\ :ex_line) do
+    new(
+      access_token: Application.fetch_env!(app, :access_token),
+      channel_id: Application.get_env(app, :channel_id)
+    )
+  end
+
+  @doc """
+  Performs a request against the LINE API.
+
+  Options:
+
+    * `:method` — HTTP method (default `:get`)
+    * `:path` — request path appended to the host (required)
+    * `:body` — request body, JSON-encoded by the adapter
+    * `:query` — query params (keyword)
+    * `:host` — `:api` (default, `base_url`) or `:data` (`data_url`, for content)
+    * `:retry_key` — sets the `X-Line-Retry-Key` header for idempotent retries
+
+  Returns the raw `{:ok, response}` / `{:error, ExLine.Error.t()}` from the
+  adapter; use `decode/1` (or an endpoint-specific handler) to map it to a result.
+  """
+  @spec request(t(), keyword()) :: {:ok, ExLine.Client.Adapter.response()} | {:error, Error.t()}
+  def request(%__MODULE__{} = client, opts) do
+    host = if opts[:host] == :data, do: client.data_url, else: client.base_url
+    path = Keyword.fetch!(opts, :path)
+    body = Keyword.get(opts, :body)
+
+    req = %{
+      method: Keyword.get(opts, :method, :get),
+      url: host <> path,
+      headers: headers(client, body, opts[:retry_key]),
+      body: body,
+      query: Keyword.get(opts, :query, [])
+    }
+
+    case client.adapter.request(req) do
+      {:ok, response} -> {:ok, response}
+      {:error, %Error{} = error} -> {:error, error}
+      {:error, reason} -> {:error, Error.network(reason)}
+    end
+  end
+
+  @doc """
+  Default response handling: 2xx → `{:ok, body}`, otherwise a classified `ExLine.Error`.
+  """
+  @spec decode({:ok, ExLine.Client.Adapter.response()} | {:error, Error.t()}) ::
+          {:ok, term()} | {:error, Error.t()}
+  def decode({:ok, %{status: status, body: body}}) when status in 200..299, do: {:ok, body}
+  def decode({:ok, %{status: status, body: body}}), do: {:error, Error.from_status(status, body)}
+  def decode({:error, %Error{}} = error), do: error
+
+  defp headers(client, body, retry_key) do
+    base = [{"authorization", "Bearer " <> client.access_token}]
+    base = if body, do: [{"content-type", "application/json"} | base], else: base
+
+    case retry_key do
+      nil -> base
+      key -> [{"x-line-retry-key", key} | base]
+    end
+  end
+end
