@@ -53,16 +53,19 @@
 ## M2 — Phase 1：核心 API
 
 - [x] `ExLine.Messaging.reply/4`、`push/4`、`multicast/4`（reply/push 於 M1 完成；multicast 新增，含 retry_key 與 notification_disabled）
-- [ ] 訊息 builder 補齊：`sticker` / `image` / `video` / `audio` / `location` / `imagemap`
-- [ ] template 補齊：`confirm` / `carousel` / `image_carousel`
+- [ ] 訊息 builder 補齊：`image` / `video` / `audio` / `location` / `imagemap` / `textV2`（mention/substitution）（`text`/`sticker` 已完成；`coupon` 訊息少用，列選配）
+- [ ] text 強化：`emojis`、`quoteToken`（引用回覆）支援
+- [ ] template 補齊：`carousel` / `image_carousel`（`buttons`/`confirm` 已完成）
+- [ ] action builder 補齊：`datetimepicker` / `camera` / `camera_roll` / `location` / `richmenu_switch` / `clipboard`（`message`/`postback`/`uri` 已完成）
 - [ ] `ExLine.Message.Flex`：正式 Flex DSL（bubble/carousel/box/text/image/button/separator）
 - [ ] `ExLine.Content`：下載媒體 / preview / transcoding status（走 api-data host）
-- [ ] `ExLine.Profile`：`get_profile/2`（搬自 hawk）+ followers ids
+- [ ] `ExLine.Profile`：`get_profile/2`（Messaging API getProfile，非 LIFF）+ followers ids
 - [ ] `ExLine.Bot`：bot info
-- [ ] quota / count / loading：`quota` / `quota_consumption`（搬自 hawk）+ `*_count` + `display_loading_animation`（搬自 hawk）
+- [ ] quota / count / loading：`quota` / `quota_consumption` + `*_count` + `display_loading_animation`
+- [ ] vendor `webhook.yml`（event 物件的 spec 來源，釘 commit，納入 conformance）
 - [ ] `ExLine.Webhook` event 解析：JSON → struct（message/follow/unfollow/join/leave/postback/memberJoined…），保留 quoteToken/source/replyToken/deliveryContext
 - [ ] `ExLine.EventRouter` matcher 擴充（目前只有 `text "..."` / `postback` / `follow` / `default`）：補任意 `text`、message 子型別（`image`/`video`/`audio`/`file`/`location`/`sticker`）、`unfollow`/`join`/`leave`/`member_joined`/`member_left`/`unsend`/`video_play_complete`/`beacon`/`account_link`/`membership`/`things`；並改為 match 解析後的 event struct（而非 raw map）
-- [ ] **驗收**：能組出全部訊息型別並通過 fixture 比對；webhook payload 解析成 struct 並被 EventRouter 正確 match（含上述各 event 型別）
+- [ ] **驗收**：每個新訊息/template/action 型別都有 conformance 測試（spec-driven TDD：先 `assert_conforms` 紅 → 實作 綠）；webhook payload 解析成 struct 並被 EventRouter 正確 match（含上述各 event 型別）
 
 ## M3 — Phase 2：進階
 
