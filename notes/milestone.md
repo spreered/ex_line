@@ -62,10 +62,22 @@
 - [x] `ExLine.Profile`：`get/2`（Messaging API getProfile，非 LIFF）+ `followers/2`
 - [x] `ExLine.Bot`：`info/1`
 - [x] quota / count / loading：`quota` / `quota_consumption` + `sent_count/3` + `display_loading_animation`
-- [ ] vendor `webhook.yml`（event 物件的 spec 來源，釘 commit，納入 conformance）
-- [ ] `ExLine.Webhook` event 解析：JSON → struct（message/follow/unfollow/join/leave/postback/memberJoined…），保留 quoteToken/source/replyToken/deliveryContext
-- [ ] `ExLine.EventRouter` matcher 擴充（目前只有 `text "..."` / `postback` / `follow` / `default`）：補任意 `text`、message 子型別（`image`/`video`/`audio`/`file`/`location`/`sticker`）、`unfollow`/`join`/`leave`/`member_joined`/`member_left`/`unsend`/`video_play_complete`/`beacon`/`account_link`/`membership`/`things`；並改為 match 解析後的 event struct（而非 raw map）
-- [ ] **驗收**：每個新訊息/template/action 型別都有 conformance 測試（spec-driven TDD：先 `assert_conforms` 紅 → 實作 綠）；webhook payload 解析成 struct 並被 EventRouter 正確 match（含上述各 event 型別）
+### webhook event 解析（已定設計：強化版 Plan A，forward-compatible）
+
+> 官方明文:LINE 會**不通知**新增 event/message 型別、enum 值、欄位（non-breaking additions），server 必須照常運作。官方 SDK 的做法是 fallback 成 `UnknownEvent`/`UnknownMessageContent` + 容忍未知欄位。我們對齊。
+
+- [x] vendor `webhook.yml`（釘 commit `779d8ca9e632`）；conformance helper 改吃兩份 spec，依 schema 名挑；fixture 驗 `CallbackRequest`
+- [x] `ExLine.Webhook.parse/1`：**total，永不 raise**——未知 type → fallback、未知欄位 → 忽略、單顆壞 → 退 `UnknownEvent`（`parse_event` 以 rescue 保底）
+- [x] event struct：高頻事件正式 struct（MessageEvent/PostbackEvent/Follow/Unfollow/Join/Leave/MemberJoined/MemberLeft）+ `Source`（user/group/room）+ message content struct（text/image/video/audio/file/location/sticker）
+- [x] fallback：未知事件 → `%ExLine.Webhook.UnknownEvent{type, raw}`；未知 message content → `ExLine.Webhook.Message.Unknown`
+- [x] **每個 event/message struct 都帶 `raw:` 原始 map**
+- [x] `ExLine.EventRouter` 改寫成 match struct + matcher 擴充：`text "..."`、`message :kind`、`postback`、`follow`/`unfollow`/`join`/`leave`/`member_joined`/`member_left`、強制 `default`
+- [ ] 長尾事件（beacon/accountLink/membership/activated/deactivated/botResumed/botSuspended/module/pnp/unsend/videoPlayComplete）先走 `UnknownEvent`，之後逐一補正式 struct（選配）
+- [x] **驗收**：fixture 符合 `CallbackRequest`；`parse/1` 對已知/未知/壞掉 payload 都不 raise；EventRouter 正確 dispatch（含 UnknownEvent → default）（135 passed）
+
+> **app glue（非 SDK 核心，文件/generator 說明）**：controller 先回 200、用 supervised async task 逐 event 處理、失敗隔離（hawk 的 `Task.Supervisor.async_nolink` 模式）。
+
+- [ ] **M2 驗收（builder/API 部分）**：每個訊息/template/action 型別有 conformance 測試（spec-driven TDD：先 `assert_conforms` 紅 → 實作 綠）
 
 ## M3 — Phase 2：進階
 

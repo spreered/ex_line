@@ -3,7 +3,7 @@
 Source of truth for conformance tests (`ExLine.Conformance`).
 
 - Origin: <https://github.com/line/line-openapi>
-- File: `messaging-api.yml`
+- Files: `messaging-api.yml` (outgoing builders/requests), `webhook.yml` (incoming events)
 - Pinned commit: `779d8ca9e632` (2026-04-13)
 
 ## Updating
@@ -12,8 +12,10 @@ Re-vendor and let the conformance tests re-check our output against the new spec
 
 ```sh
 COMMIT=<new-commit-sha>
-curl -s "https://raw.githubusercontent.com/line/line-openapi/$COMMIT/messaging-api.yml" \
-  -o test/support/line_openapi/messaging-api.yml
+for f in messaging-api.yml webhook.yml; do
+  curl -s "https://raw.githubusercontent.com/line/line-openapi/$COMMIT/$f" \
+    -o "test/support/line_openapi/$f"
+done
 ```
 
 Then bump the commit above, `git diff` the YAML to see what changed, and run

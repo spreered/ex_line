@@ -21,13 +21,15 @@ Two tasks — do whichever the user asked for (or both).
    curl -s "https://api.github.com/repos/line/line-openapi/commits/main" \
      | python3 -c "import sys,json;d=json.load(sys.stdin);print(d['sha'], d['commit']['author']['date'])"
    ```
-2. For each spec file ExLine vendors (currently `messaging-api.yml`; later also
-   `webhook.yml`, `channel-access-token.yml`, `insight.yml`, `manage-audience.yml`,
-   `liff.yml`), download at the target commit:
+2. For each spec file ExLine vendors (currently `messaging-api.yml` and
+   `webhook.yml`; later also `channel-access-token.yml`, `insight.yml`,
+   `manage-audience.yml`, `liff.yml`), download at the target commit:
    ```sh
    COMMIT=<sha>
-   curl -s "https://raw.githubusercontent.com/line/line-openapi/$COMMIT/messaging-api.yml" \
-     -o test/support/line_openapi/messaging-api.yml
+   for f in messaging-api.yml webhook.yml; do
+     curl -s "https://raw.githubusercontent.com/line/line-openapi/$COMMIT/$f" \
+       -o "test/support/line_openapi/$f"
+   done
    ```
 3. `git diff test/support/line_openapi/` — summarize what changed (new/changed
    endpoints, new message types, new/changed constraints like maxLength/required).
@@ -52,12 +54,23 @@ sed -n '/^    Action:/,/^    [A-Z][a-zA-Z]*:/p' $F | grep -oE '/[A-Za-z]+Action"
 sed -n '/^    Template:/,/^    [A-Z][a-zA-Z]*:/p' $F | grep -oE '/[A-Za-z]+Template"?' | tr -d '/"' | sort -u
 ```
 
+Webhook side (`W=test/support/line_openapi/webhook.yml`):
+```sh
+# event types (Event discriminator)
+sed -n '/^    Event:/,/^    [A-Z][a-zA-Z]*:/p' $W | grep -oE '/[A-Za-z]+Event"?' | tr -d '/"' | sort -u
+# message content types (MessageContent discriminator)
+sed -n '/^    MessageContent:/,/^    [A-Z][a-zA-Z]*:/p' $W | grep -oE '/[A-Za-z]+MessageContent"?' | tr -d '/"' | sort -u
+```
+
 **2. Detect what's implemented:**
 ```sh
 # request paths wired up
 grep -rhoE '"/v2/bot[^"]*"' lib/ex_line | sort -u
 # message/action/template type tags we build
 grep -rhoE 'type: "[a-zA-Z]+"' lib/ex_line/message* | sort -u
+# webhook event/content structs + parse clauses
+grep -rhoE 'defmodule ExLine.Webhook\.[A-Za-z.]+' lib/ex_line/webhook
+grep -rhoE '"type" => "[a-zA-Z]+"' lib/ex_line/webhook.ex lib/ex_line/webhook/message.ex | sort -u
 # public functions per module
 grep -rnE '^  def [a-z]' lib/ex_line
 ```
@@ -81,16 +94,18 @@ mapping for ExLine — keep in sync with `notes/plan_message_api.md`):
 | coupon | `ExLine.Coupon` |
 | aggregation unit / insight | `ExLine.Insight` |
 | message/template/action/flex builders | `ExLine.Message.*` |
+| webhook event types (webhook.yml) | `ExLine.Webhook.*Event` (parsed by `ExLine.Webhook.parse/1`) |
+| webhook message content (webhook.yml) | `ExLine.Webhook.Message.*` |
 
 Output: per-area counts (implemented / total), the list of missing items, and which
 milestone (`notes/milestone.md`) they belong to. Flag any spec item that has no
 namespace mapping yet (it may be a newly added API area).
 
 **4. Other line-openapi specs** not yet vendored, and their target namespace:
-`webhook.yml` → `ExLine.Webhook` events (M2); `channel-access-token.yml` →
-`ExLine.Auth.*` (M3); `insight.yml` → `ExLine.Insight`, `manage-audience.yml` →
-`ExLine.Audience` (M4); `liff.yml` → `ExLine.Liff.Apps` (Plan 2). Note if any are
-now relevant to current work.
+`channel-access-token.yml` → `ExLine.Auth.*` (M3); `insight.yml` → `ExLine.Insight`,
+`manage-audience.yml` → `ExLine.Audience` (M4); `liff.yml` → `ExLine.Liff.Apps`
+(Plan 2). Note if any are now relevant to current work.
+(`messaging-api.yml` and `webhook.yml` are already vendored.)
 
 ## Notes
 

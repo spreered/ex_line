@@ -100,5 +100,26 @@ handle, and we always validate against a concrete schema name).
   builders reject invalid input (e.g. over-length text). Input validation is a
   separate, explicit decision.
 
+## Webhook events (incoming) must be forward-compatible
+
+LINE makes non-breaking additions **without notice** — new event/message types, new
+enum values, new fields on existing types — and requires servers to keep working
+([dev guidelines](https://developers.line.biz/en/docs/messaging-api/development-guidelines/)).
+Official SDKs handle this by falling back to `UnknownEvent` / `UnknownMessageContent`
+and tolerating unknown fields. ExLine follows the same rules:
+
+- **`ExLine.Webhook.parse/1` is total — it never raises.** Unknown event/message
+  `type` → an `Unknown*` fallback struct; unknown fields → ignored, not an error; a
+  single malformed event → degrades to `UnknownEvent`, never failing the whole batch.
+- **Every event/message struct carries the original `raw` map**, so a newly added
+  field on a high-frequency type is still reachable before it is modelled.
+- **The router keeps a required `default` catch-all** (so `UnknownEvent` is always
+  routable); never rely on exhaustive matches that crash on a new type.
+- Conformance for webhooks runs in the *receive* direction: validate sample
+  **fixtures** against `webhook.yml` (proving they match what LINE sends), then assert
+  `parse/1` produces the expected structs.
+- App glue (return 200 first, process each event in a supervised async task, isolate
+  failures) belongs to the host app / generator, not the SDK core.
+
 ## Commit 
 Don't write co-authored by in the commit message
