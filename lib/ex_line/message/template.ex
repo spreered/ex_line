@@ -60,6 +60,63 @@ defmodule ExLine.Message.Template do
     }
   end
 
+  @doc """
+  Carousel template — up to 10 columns built with `carousel_column/3`.
+
+  Options: `:alt_text`, `:image_aspect_ratio`, `:image_size`.
+
+  Ref: https://developers.line.biz/en/reference/messaging-api/#carousel
+  """
+  @spec carousel([map()], keyword()) :: map()
+  def carousel(columns, opts \\ []) do
+    template =
+      %{type: "carousel", columns: columns}
+      |> maybe_put(:imageAspectRatio, opts[:image_aspect_ratio])
+      |> maybe_put(:imageSize, opts[:image_size])
+
+    %{type: "template", altText: opts[:alt_text] || "carousel", template: template}
+  end
+
+  @doc """
+  A carousel column. `text` and `actions` are required.
+
+  Options: `:title`, `:thumbnail_image_url`, `:image_background_color`, `:default_action`.
+
+      iex> ExLine.Message.Template.carousel_column("desc", [ExLine.Message.Action.message("A", "a")])
+      %{text: "desc", actions: [%{type: "message", label: "A", text: "a"}]}
+  """
+  @spec carousel_column(String.t(), [map()], keyword()) :: map()
+  def carousel_column(text, actions, opts \\ []) do
+    %{text: text, actions: actions}
+    |> maybe_put(:title, opts[:title])
+    |> maybe_put(:thumbnailImageUrl, opts[:thumbnail_image_url])
+    |> maybe_put(:imageBackgroundColor, opts[:image_background_color])
+    |> maybe_put(:defaultAction, opts[:default_action])
+  end
+
+  @doc """
+  Image carousel template — columns built with `image_carousel_column/2`.
+
+  Ref: https://developers.line.biz/en/reference/messaging-api/#image-carousel
+  """
+  @spec image_carousel([map()], keyword()) :: map()
+  def image_carousel(columns, opts \\ []) do
+    %{
+      type: "template",
+      altText: opts[:alt_text] || "image carousel",
+      template: %{type: "image_carousel", columns: columns}
+    }
+  end
+
+  @doc """
+  An image carousel column: an image with a single action.
+
+      iex> ExLine.Message.Template.image_carousel_column("https://x/i.jpg", ExLine.Message.Action.uri("Open", "https://x"))
+      %{imageUrl: "https://x/i.jpg", action: %{type: "uri", label: "Open", uri: "https://x"}}
+  """
+  @spec image_carousel_column(String.t(), map()) :: map()
+  def image_carousel_column(image_url, action), do: %{imageUrl: image_url, action: action}
+
   defp maybe_put(map, _key, nil), do: map
   defp maybe_put(map, key, value), do: Map.put(map, key, value)
 end
