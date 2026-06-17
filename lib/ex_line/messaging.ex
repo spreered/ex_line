@@ -12,6 +12,7 @@ defmodule ExLine.Messaging do
 
   @reply_path "/v2/bot/message/reply"
   @push_path "/v2/bot/message/push"
+  @multicast_path "/v2/bot/message/multicast"
 
   @type messages :: map() | [map()]
 
@@ -45,19 +46,55 @@ defmodule ExLine.Messaging do
   @spec push(Client.t(), String.t(), messages(), keyword()) ::
           {:ok, map()} | {:error, Error.t()}
   def push(client, to, messages, opts \\ []) do
-    body = %{to: to, messages: List.wrap(messages)}
+    body =
+      %{to: to, messages: List.wrap(messages)}
+      |> maybe_disable_notification(opts)
 
     client
     |> Client.request(method: :post, path: @push_path, body: body, retry_key: opts[:retry_key])
-    |> handle_push()
+    |> handle_send()
+  end
+
+  @doc """
+  Sends the same messages to multiple users at once (max 500 user IDs).
+
+  `to` is a list of user IDs; group/room IDs are not allowed. Like `push/4`,
+  `opts[:retry_key]` enables idempotent retries (409 is treated as success) and
+  HTTP 429 maps to `%ExLine.Error{kind: :quota_exceeded}`. `opts[:notification_disabled]`
+  suppresses the push notification.
+
+  Ref: https://developers.line.biz/en/reference/messaging-api/#send-multicast-message
+  """
+  @spec multicast(Client.t(), [String.t()], messages(), keyword()) ::
+          {:ok, map()} | {:error, Error.t()}
+  def multicast(client, to, messages, opts \\ []) when is_list(to) do
+    body =
+      %{to: to, messages: List.wrap(messages)}
+      |> maybe_disable_notification(opts)
+
+    client
+    |> Client.request(
+      method: :post,
+      path: @multicast_path,
+      body: body,
+      retry_key: opts[:retry_key]
+    )
+    |> handle_send()
+  end
+
+  defp maybe_disable_notification(body, opts) do
+    case Keyword.get(opts, :notification_disabled) do
+      nil -> body
+      value -> Map.put(body, :notificationDisabled, value)
+    end
   end
 
   # 200 = sent, 409 = deduplicated retry (X-Line-Retry-Key) — both are success.
-  defp handle_push({:ok, %{status: status, body: body}}) when status in [200, 409],
+  defp handle_send({:ok, %{status: status, body: body}}) when status in [200, 409],
     do: {:ok, body}
 
-  defp handle_push({:ok, %{status: status, body: body}}),
+  defp handle_send({:ok, %{status: status, body: body}}),
     do: {:error, Error.from_status(status, body)}
 
-  defp handle_push({:error, %Error{}} = error), do: error
+  defp handle_send({:error, %Error{}} = error), do: error
 end

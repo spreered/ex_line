@@ -77,5 +77,49 @@ defmodule ExLine.MessagingTest do
       expect(ExLine.AdapterMock, :request, fn _req -> {:error, Error.network(:closed)} end)
       assert {:error, %Error{kind: :network}} = Messaging.push(client(), "U1", Message.text("hi"))
     end
+
+    test "notification_disabled adds the flag to the body" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.body.notificationDisabled == true
+        {:ok, %{status: 200, body: %{}}}
+      end)
+
+      Messaging.push(client(), "U1", Message.text("hi"), notification_disabled: true)
+    end
+  end
+
+  describe "multicast/4" do
+    test "posts to the multicast endpoint with a list of recipients" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.url == "https://api.line.me/v2/bot/message/multicast"
+        assert req.body == %{to: ["U1", "U2"], messages: [%{type: "text", text: "hi"}]}
+        {:ok, %{status: 200, body: %{}}}
+      end)
+
+      assert {:ok, %{}} = Messaging.multicast(client(), ["U1", "U2"], Message.text("hi"))
+    end
+
+    test "sends X-Line-Retry-Key when given and treats 409 as success" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert {"x-line-retry-key", "uuid-2"} in req.headers
+        {:ok, %{status: 409, body: %{}}}
+      end)
+
+      assert {:ok, %{}} =
+               Messaging.multicast(client(), ["U1"], Message.text("hi"), retry_key: "uuid-2")
+    end
+
+    test "429 maps to quota_exceeded" do
+      expect(ExLine.AdapterMock, :request, fn _req -> {:ok, %{status: 429, body: %{}}} end)
+
+      assert {:error, %Error{kind: :quota_exceeded}} =
+               Messaging.multicast(client(), ["U1"], Message.text("hi"))
+    end
+
+    test "requires a list of recipients" do
+      assert_raise FunctionClauseError, fn ->
+        Messaging.multicast(client(), "U1", Message.text("hi"))
+      end
+    end
   end
 end

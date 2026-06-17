@@ -33,7 +33,7 @@
 
 ## M2 — Phase 1：核心 API
 
-- [ ] `ExLine.Messaging.reply/4`、`push/4`、`multicast/4`（multicast 為新增）
+- [x] `ExLine.Messaging.reply/4`、`push/4`、`multicast/4`（reply/push 於 M1 完成；multicast 新增，含 retry_key 與 notification_disabled）
 - [ ] 訊息 builder 補齊：`sticker` / `image` / `video` / `audio` / `location` / `imagemap`
 - [ ] template 補齊：`confirm` / `carousel` / `image_carousel`
 - [ ] `ExLine.Message.Flex`：正式 Flex DSL（bubble/carousel/box/text/image/button/separator）
@@ -42,7 +42,8 @@
 - [ ] `ExLine.Bot`：bot info
 - [ ] quota / count / loading：`quota` / `quota_consumption`（搬自 hawk）+ `*_count` + `display_loading_animation`（搬自 hawk）
 - [ ] `ExLine.Webhook` event 解析：JSON → struct（message/follow/unfollow/join/leave/postback/memberJoined…），保留 quoteToken/source/replyToken/deliveryContext
-- [ ] **驗收**：能組出全部訊息型別並通過 fixture 比對；webhook payload 解析成 struct 並被 EventRouter 正確 match
+- [ ] `ExLine.EventRouter` matcher 擴充（目前只有 `text "..."` / `postback` / `follow` / `default`）：補任意 `text`、message 子型別（`image`/`video`/`audio`/`file`/`location`/`sticker`）、`unfollow`/`join`/`leave`/`member_joined`/`member_left`/`unsend`/`video_play_complete`/`beacon`/`account_link`/`membership`/`things`；並改為 match 解析後的 event struct（而非 raw map）
+- [ ] **驗收**：能組出全部訊息型別並通過 fixture 比對；webhook payload 解析成 struct 並被 EventRouter 正確 match（含上述各 event 型別）
 
 ## M3 — Phase 2：進階
 
