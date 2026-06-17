@@ -76,3 +76,6 @@ guessing anchors.
 - Real-API smoke tests use a personal test channel, credentials from env, tagged
   `@tag :external` and excluded by default (`ExUnit.start(exclude: [:external])`).
 - Never commit channel tokens or secrets.
+
+## Commit 
+Don't write co-authored by in the commit message

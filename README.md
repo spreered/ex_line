@@ -28,6 +28,52 @@ end
 `:plug` is an optional dependency, only needed if you use `ExLine.Webhook.Plug` /
 `ExLine.Webhook.BodyReader`.
 
+## Configuration
+
+You need credentials from the [LINE Developers Console](https://developers.line.biz/console/):
+
+| Credential | Where it's used | From |
+| --- | --- | --- |
+| **Channel access token** | sending messages (`ExLine.Client`) | Messaging API channel |
+| **Channel secret** | webhook signature (`ExLine.Webhook`) | Messaging API channel |
+
+ExLine never holds global credential state — you pass what each call needs. There
+are three ways to supply them, pick per use case:
+
+**1. Per-call value (default; multi-channel / multi-tenant friendly).** Build a
+client from wherever you store the token (DB row, etc.) and pass it in:
+
+```elixir
+client = ExLine.Client.new(access_token: channel.access_token)
+ExLine.Messaging.push(client, user_id, message)
+```
+
+**2. From application config (single-channel convenience).**
+
+```elixir
+# config/runtime.exs
+config :ex_line,
+  access_token: System.fetch_env!("LINE_CHANNEL_ACCESS_TOKEN"),
+  channel_id: System.get_env("LINE_CHANNEL_ID")
+```
+
+```elixir
+client = ExLine.Client.from_env()
+```
+
+**3. Webhook secret via a resolver (kept separate from the client).** The channel
+secret belongs to a different trust boundary, so it is passed directly — as a
+static value, or a `fn conn -> secret end` resolver that picks the right channel
+at request time (see [Receiving webhooks](#receiving-webhooks)):
+
+```elixir
+plug ExLine.Webhook.Plug, secret: System.fetch_env!("LINE_CHANNEL_SECRET")
+# or, multi-channel:
+plug ExLine.Webhook.Plug, secret: fn conn -> MyApp.secret_for(conn) end
+```
+
+> Never commit tokens or secrets — load them from the environment.
+
 ## Sending messages
 
 ```elixir
@@ -55,19 +101,6 @@ ExLine.Messaging.push(client, "U123...", msg, retry_key: "a-uuid")
 Errors come back as `{:error, %ExLine.Error{kind: kind}}` where `kind` is one of
 `:transient`, `:quota_exceeded`, `:permanent`, or `:network` (see
 `ExLine.Error.retryable?/1`).
-
-For a multi-channel app, build the client from whatever you store per channel:
-
-```elixir
-client = ExLine.Client.new(access_token: channel.access_token)
-```
-
-Or, for a single channel, from config:
-
-```elixir
-config :ex_line, access_token: "...", channel_id: "..."
-ExLine.Client.from_env()
-```
 
 ## Receiving webhooks
 
