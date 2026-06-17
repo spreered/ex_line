@@ -16,25 +16,23 @@ defmodule ExLine.Conformance do
 
   import ExUnit.Assertions
 
-  @spec_path Path.join([__DIR__, "line_openapi", "messaging-api.yml"])
   # Pinned line-openapi commit: 779d8ca9e632 (2026-04-13). Re-vendor to update.
-  @pt_key {__MODULE__, :spec}
+  # Both specs are self-contained, so we keep them separate and pick by schema name
+  # (messaging-api = outgoing builders/requests; webhook = incoming events).
+  @spec_files %{
+    messaging: "messaging-api.yml",
+    webhook: "webhook.yml"
+  }
 
   @doc """
-  Asserts that `value` (a builder output or request body, atom- or string-keyed)
-  conforms to the named schema in the vendored Messaging API spec.
+  Asserts that `value` (a builder output, request body, or webhook payload; atom- or
+  string-keyed) conforms to the named schema in the vendored specs.
 
   The value is round-tripped through JSON first, which also verifies it is
-  JSON-serializable the way it will be sent on the wire.
+  JSON-serializable the way it travels on the wire.
   """
   def assert_conforms(value, schema_name) do
-    spec = spec()
-
-    schema =
-      spec.components.schemas[schema_name] ||
-        raise ArgumentError,
-              "unknown schema #{inspect(schema_name)} in vendored messaging-api.yml"
-
+    {spec, schema} = find_schema(schema_name)
     json = value |> Jason.encode!() |> Jason.decode!()
 
     case OpenApiSpex.cast_value(json, schema, spec) do
@@ -50,17 +48,32 @@ defmodule ExLine.Conformance do
     end
   end
 
-  @doc "Decoded OpenApi spec struct (parsed once, cached across tests)."
-  def spec do
-    case :persistent_term.get(@pt_key, nil) do
+  defp find_schema(schema_name) do
+    Enum.find_value(Map.keys(@spec_files), fn key ->
+      spec = spec(key)
+
+      case spec.components.schemas[schema_name] do
+        nil -> nil
+        schema -> {spec, schema}
+      end
+    end) ||
+      raise ArgumentError, "unknown schema #{inspect(schema_name)} in vendored specs"
+  end
+
+  @doc "Decoded OpenApi spec struct for `which` (`:messaging` | `:webhook`), cached."
+  def spec(which \\ :messaging) do
+    key = {__MODULE__, which}
+
+    case :persistent_term.get(key, nil) do
       nil ->
         spec =
-          @spec_path
+          [__DIR__, "line_openapi", Map.fetch!(@spec_files, which)]
+          |> Path.join()
           |> YamlElixir.read_from_file!()
           |> OpenApiSpex.OpenApi.Decode.decode()
           |> strip_discriminators()
 
-        :persistent_term.put(@pt_key, spec)
+        :persistent_term.put(key, spec)
         spec
 
       spec ->

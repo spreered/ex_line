@@ -1,6 +1,8 @@
 defmodule ExLine.EventRouterTest do
   use ExUnit.Case, async: true
 
+  alias ExLine.Webhook
+
   # Handlers record the dispatch into the test process for assertion.
   defmodule EchoHandler do
     use ExLine.EventHandler
@@ -17,45 +19,60 @@ defmodule ExLine.EventRouterTest do
 
     text("hello", %{role: :admin}, EchoHandler, :admin_hello)
     text("hello", EchoHandler, :hello)
+    message(:image, EchoHandler, :on_image)
     postback("buy", EchoHandler, :buy)
     follow(EchoHandler, :welcome)
+    member_joined(EchoHandler, :greet)
     default(EchoHandler, :fallback)
 
     @impl true
-    def before_action(event, assigns) do
-      {event, Map.put(assigns, :seen, true)}
-    end
+    def before_action(event, assigns), do: {event, Map.put(assigns, :seen, true)}
   end
 
-  defp text_event(text), do: %{"message" => %{"type" => "text", "text" => text}}
+  defp route(raw, assigns \\ %{}), do: raw |> Webhook.parse_event() |> Router.call(assigns)
+
+  defp text_event(text),
+    do: %{"type" => "message", "message" => %{"type" => "text", "text" => text}}
 
   test "routes a text message to its handler/action" do
-    Router.call(text_event("hello"))
-    assert_received {:handled, :hello, _event, %{seen: true}}
+    route(text_event("hello"))
+    assert_received {:handled, :hello, %Webhook.MessageEvent{}, %{seen: true}}
   end
 
   test "assigns pattern selects a more specific route" do
-    Router.call(text_event("hello"), %{role: :admin})
+    route(text_event("hello"), %{role: :admin})
     assert_received {:handled, :admin_hello, _event, _assigns}
   end
 
+  test "routes any image message by content kind" do
+    route(%{"type" => "message", "message" => %{"type" => "image", "id" => "1"}})
+
+    assert_received {:handled, :on_image,
+                     %Webhook.MessageEvent{message: %Webhook.Message.Image{}}, _}
+  end
+
   test "routes postback by data" do
-    Router.call(%{"type" => "postback", "postback" => %{"data" => "buy"}})
-    assert_received {:handled, :buy, _event, _assigns}
+    route(%{"type" => "postback", "postback" => %{"data" => "buy"}})
+    assert_received {:handled, :buy, %Webhook.PostbackEvent{}, _assigns}
   end
 
   test "routes follow events" do
-    Router.call(%{"type" => "follow"})
-    assert_received {:handled, :welcome, _event, _assigns}
+    route(%{"type" => "follow"})
+    assert_received {:handled, :welcome, %Webhook.FollowEvent{}, _assigns}
   end
 
-  test "falls back for unmatched events" do
-    Router.call(%{"type" => "unsend"})
+  test "routes member-joined events" do
+    route(%{"type" => "memberJoined", "joined" => %{"members" => []}})
+    assert_received {:handled, :greet, %Webhook.MemberJoinedEvent{}, _assigns}
+  end
+
+  test "unknown event type falls through to default" do
+    route(%{"type" => "beacon", "beacon" => %{"hwid" => "x"}})
+    assert_received {:handled, :fallback, %Webhook.UnknownEvent{type: "beacon"}, _assigns}
+  end
+
+  test "a text other than the matched literal falls through to default" do
+    route(text_event("nope"))
     assert_received {:handled, :fallback, _event, _assigns}
-  end
-
-  test "before_action preprocesses assigns" do
-    Router.call(text_event("hello"), %{})
-    assert_received {:handled, :hello, _event, %{seen: true}}
   end
 end
