@@ -77,5 +77,28 @@ guessing anchors.
   `@tag :external` and excluded by default (`ExUnit.start(exclude: [:external])`).
 - Never commit channel tokens or secrets.
 
+## Conformance (format matches LINE's spec)
+
+The source of truth for "our output matches LINE's expected format" is LINE's
+official OpenAPI spec, vendored under `test/support/line_openapi/` (pinned to a
+commit). Validate builder/request output with `ExLine.Conformance.assert_conforms/2`
+(backed by `open_api_spex`; the helper strips discriminators because LINE uses a
+`parent + allOf` polymorphism shape that open_api_spex's discriminator cast can't
+handle, and we always validate against a concrete schema name).
+
+- **Spec-driven TDD loop** for anything that maps to a LINE schema (message types,
+  templates, actions, request bodies): write the `assert_conforms(..., "SchemaName")`
+  test first (red), then implement until green.
+- **When LINE updates the spec:** re-vendor the YAML (bump the pinned commit),
+  `git diff` to see what changed, re-run `mix test`. Code that violates a new
+  constraint turns its conformance test red — fix, then commit. No regeneration.
+- **Test structure:** conformance tests live in each module's own test file inside a
+  `describe "conformance" do @describetag :conformance ... end` block (not a separate
+  file), so adding a type touches one file. Run all of them with
+  `mix test --only conformance`. The shared helper stays in `test/support/`.
+- Conformance validates the structure of the *sample* you pass; it does not prove
+  builders reject invalid input (e.g. over-length text). Input validation is a
+  separate, explicit decision.
+
 ## Commit 
 Don't write co-authored by in the commit message

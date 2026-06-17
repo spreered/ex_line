@@ -31,6 +31,25 @@
 - [x] `ExLine.EventRouter` / `ExLine.EventHandler`：路由 macro，`EventHandler` auto-import `ExLine.Message`
 - [x] **驗收**：mock adapter 下 `reply`/`push` 送出正確 body/header（含 retry-key）；驗章單元測試通過；`use ExLine.EventRouter` 可定義 routes 並 dispatch（17 doctests + 32 tests, 0 failures）
 
+## M1.5 — OpenAPI conformance 基礎（開發流程 / QA）
+
+> 以官方 `line-openapi` 為真相來源驗證「我們的格式 == LINE 預期格式」，建立 spec-driven TDD loop。資料驅動：spec 更新只需重 vendor yaml，assertion 自動跟著走。
+
+- [x] 加 test-only 依賴：`open_api_spex`（原生吃 OpenAPI 3.0，免 JSON Schema 預處理）、`yaml_elixir`（讀 .yml 成 map）
+- [x] vendor 官方 spec：`messaging-api.yml` 釘 commit `779d8ca9e632` 放 `test/support/line_openapi/`（+ README 記版本；webhook.yml 等之後再加）
+- [x] `mix.exs` 啟用 `elixirc_paths(:test)`，讓 `test/support` 共用 helper
+- [x] conformance helper：`assert_conforms(value, "TextMessage")`（含 strip discriminator 繞過 open_api_spex 對 LINE 多型模式的不相容）
+- [x] 對現有 builder/信封補 conformance 測試：text/sticker/buttons/confirm/action + push/reply/multicast request（12 passed）
+- [x] 回報暴露出的落差：text 1..5000 / messages 1..5 builder 未強制（conformance 只驗合法樣本，不會紅）→ 留待 builder 輸入驗證另議；request body 因 strip discriminator 退成驗 base 屬性，每型別嚴格度由具體型別測試補足
+- [x] **驗收**：`mix test` 66 passed、`--warnings-as-errors` 乾淨、dialyzer 0 errors
+- [x] **重構測試結構**：把 conformance 測試打散進各 module test 檔的 `describe "conformance"`（tag `:conformance`），刪除 `conformance_test.exs`；helper 留 `test/support/`
+- [x] **更新 CLAUDE.md**：加 conformance 概念 + spec-driven TDD loop + 測試結構慣例（tagged describe）
+- [x] **建 `line-spec-coverage` skill**：(a) 依 commit 更新 vendored spec + diff；(b) 解析 spec operationId/訊息子型別 比對已實作，產出覆蓋率表（對應 namespace + 缺項），對照 milestone
+- [ ] TDD loop 確立：之後 M2 每加一型別先寫 `assert_conforms` → 紅 → 實作 → 綠；LINE 改版則重 vendor yaml → diff → 重跑 → 修紅
+
+> **覆蓋率快照（2026-06，messaging-api.yml）**：endpoint 3/73、訊息 3/11、template 2/4、action 3/9。缺的訊息型別（textV2/image/video/audio/location/imagemap/flex/coupon）是 M2 主菜。
+> **待補的其他 spec**：webhook.yml（M2 event）、channel-access-token.yml（M3 token）、insight.yml / manage-audience.yml（M4）、liff.yml（Plan 2）。
+
 ## M2 — Phase 1：核心 API
 
 - [x] `ExLine.Messaging.reply/4`、`push/4`、`multicast/4`（reply/push 於 M1 完成；multicast 新增，含 retry_key 與 notification_disabled）
