@@ -9,7 +9,8 @@ defmodule ExLine.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       name: "ExLine",
-      docs: docs()
+      docs: docs(),
+      dialyzer: dialyzer()
     ]
   end
 
@@ -29,7 +30,8 @@ defmodule ExLine.MixProject do
       # so non-Plug consumers (CLI, scripts) are not forced to pull it in.
       {:plug, "~> 1.16", optional: true},
       {:mox, "~> 1.1", only: :test},
-      {:ex_doc, "~> 0.34", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev], runtime: false}
     ]
   end
 
@@ -37,6 +39,17 @@ defmodule ExLine.MixProject do
     [
       main: "readme",
       extras: ["README.md"]
+    ]
+  end
+
+  # Dialyzer verifies our published @specs. The PLT is cached under priv/plts so
+  # CI can restore it instead of rebuilding (the slow part) every run.
+  defp dialyzer do
+    [
+      plt_local_path: "priv/plts",
+      plt_core_path: "priv/plts",
+      plt_add_apps: [:plug],
+      flags: [:error_handling, :extra_return, :missing_return, :unknown]
     ]
   end
 end
