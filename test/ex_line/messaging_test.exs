@@ -124,6 +124,48 @@ defmodule ExLine.MessagingTest do
     end
   end
 
+  describe "quota / count / loading" do
+    test "quota/1 GETs the quota endpoint" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.method == :get
+        assert req.url == "https://api.line.me/v2/bot/message/quota"
+        {:ok, %{status: 200, body: %{"type" => "limited", "value" => 500}}}
+      end)
+
+      assert {:ok, %{"type" => "limited"}} = Messaging.quota(client())
+    end
+
+    test "quota_consumption/1 GETs consumption" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.url == "https://api.line.me/v2/bot/message/quota/consumption"
+        {:ok, %{status: 200, body: %{"totalUsage" => 42}}}
+      end)
+
+      assert {:ok, %{"totalUsage" => 42}} = Messaging.quota_consumption(client())
+    end
+
+    test "sent_count/3 hits the delivery endpoint with date" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.url == "https://api.line.me/v2/bot/message/delivery/push"
+        assert {:date, "20260101"} in req.query
+        {:ok, %{status: 200, body: %{"status" => "ready", "success" => 10}}}
+      end)
+
+      assert {:ok, %{"success" => 10}} = Messaging.sent_count(client(), :push, "20260101")
+    end
+
+    test "display_loading_animation/3 POSTs chatId + loadingSeconds" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.method == :post
+        assert req.url == "https://api.line.me/v2/bot/chat/loading/start"
+        assert req.body == %{chatId: "U1", loadingSeconds: 10}
+        {:ok, %{status: 202, body: %{}}}
+      end)
+
+      assert {:ok, %{}} = Messaging.display_loading_animation(client(), "U1", 10)
+    end
+  end
+
   # Conformance of the request envelopes against LINE's official OpenAPI spec.
   describe "conformance" do
     @describetag :conformance

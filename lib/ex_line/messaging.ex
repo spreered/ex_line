@@ -82,6 +82,64 @@ defmodule ExLine.Messaging do
     |> handle_send()
   end
 
+  @doc """
+  Displays a loading animation in a one-on-one chat for up to `seconds` (5–60, in
+  multiples of 5).
+
+  Ref: https://developers.line.biz/en/reference/messaging-api/#display-a-loading-indicator
+  """
+  @spec display_loading_animation(Client.t(), String.t(), pos_integer()) ::
+          {:ok, map()} | {:error, Error.t()}
+  def display_loading_animation(client, chat_id, seconds \\ 20) do
+    body = %{chatId: chat_id, loadingSeconds: seconds}
+
+    client
+    |> Client.request(method: :post, path: "/v2/bot/chat/loading/start", body: body)
+    |> Client.decode()
+  end
+
+  @doc """
+  Gets this month's message-sending quota (`%{"type" => "limited"|"none", "value" => n}`).
+
+  Ref: https://developers.line.biz/en/reference/messaging-api/#get-quota
+  """
+  @spec quota(Client.t()) :: {:ok, map()} | {:error, Error.t()}
+  def quota(client) do
+    client
+    |> Client.request(method: :get, path: "/v2/bot/message/quota")
+    |> Client.decode()
+  end
+
+  @doc """
+  Gets this month's number of sent messages counted toward the quota.
+
+  Ref: https://developers.line.biz/en/reference/messaging-api/#get-consumption
+  """
+  @spec quota_consumption(Client.t()) :: {:ok, map()} | {:error, Error.t()}
+  def quota_consumption(client) do
+    client
+    |> Client.request(method: :get, path: "/v2/bot/message/quota/consumption")
+    |> Client.decode()
+  end
+
+  @doc """
+  Gets the number of messages sent on `date` (`"yyyyMMdd"`) for the given `kind`
+  (`:reply` | `:push` | `:multicast` | `:broadcast`).
+
+  Ref: https://developers.line.biz/en/reference/messaging-api/#get-number-of-reply-messages
+  """
+  @spec sent_count(Client.t(), :reply | :push | :multicast | :broadcast, String.t()) ::
+          {:ok, map()} | {:error, Error.t()}
+  def sent_count(client, kind, date) when kind in [:reply, :push, :multicast, :broadcast] do
+    client
+    |> Client.request(
+      method: :get,
+      path: "/v2/bot/message/delivery/#{kind}",
+      query: [date: date]
+    )
+    |> Client.decode()
+  end
+
   defp maybe_disable_notification(body, opts) do
     case Keyword.get(opts, :notification_disabled) do
       nil -> body
