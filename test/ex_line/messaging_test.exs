@@ -2,6 +2,7 @@ defmodule ExLine.MessagingTest do
   use ExUnit.Case, async: true
 
   import Mox
+  import ExLine.Conformance
 
   alias ExLine.{Client, Error, Message, Messaging}
 
@@ -120,6 +121,28 @@ defmodule ExLine.MessagingTest do
       assert_raise FunctionClauseError, fn ->
         Messaging.multicast(client(), "U1", Message.text("hi"))
       end
+    end
+  end
+
+  # Conformance of the request envelopes against LINE's official OpenAPI spec.
+  describe "conformance" do
+    @describetag :conformance
+
+    test "reply request → ReplyMessageRequest" do
+      assert_conforms(%{replyToken: "rt", messages: [Message.text("hi")]}, "ReplyMessageRequest")
+    end
+
+    test "push request → PushMessageRequest" do
+      assert_conforms(%{to: "U1", messages: [Message.text("hi")]}, "PushMessageRequest")
+    end
+
+    test "push request with notificationDisabled → PushMessageRequest" do
+      body = %{to: "U1", messages: [Message.text("hi")], notificationDisabled: true}
+      assert_conforms(body, "PushMessageRequest")
+    end
+
+    test "multicast request → MulticastRequest" do
+      assert_conforms(%{to: ["U1", "U2"], messages: [Message.text("hi")]}, "MulticastRequest")
     end
   end
 end

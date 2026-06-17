@@ -6,6 +6,7 @@ defmodule ExLine.MixProject do
       app: :ex_line,
       version: "0.1.0",
       elixir: "~> 1.18",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       name: "ExLine",
@@ -13,6 +14,10 @@ defmodule ExLine.MixProject do
       dialyzer: dialyzer()
     ]
   end
+
+  # Compile test/support (shared test helpers like ExLine.Conformance) in :test.
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   # Run "mix help compile.app" to learn about applications.
   def application do
@@ -31,7 +36,12 @@ defmodule ExLine.MixProject do
       {:plug, "~> 1.16", optional: true},
       {:mox, "~> 1.1", only: :test},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
+      # Conformance testing: validate builder output against LINE's official
+      # OpenAPI spec (open_api_spex parses OpenAPI 3.0 natively; yaml_elixir reads
+      # the vendored .yml into a map).
+      {:open_api_spex, "~> 3.22", only: :test},
+      {:yaml_elixir, "~> 2.12", only: :test}
     ]
   end
 
