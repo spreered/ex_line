@@ -47,6 +47,92 @@ defmodule ExLine.MessageTest do
            }
   end
 
+  # Optional fields map snake_case opts to the correct camelCase wire key, and are
+  # omitted when not given. Conformance can't guard these (a mis-named optional key
+  # is silently accepted as an extra property and the real field just goes missing).
+  describe "optional field mappings" do
+    test "Message.text emojis" do
+      emojis = [%{index: 0, productId: "p", emojiId: "e"}]
+      assert Message.text("hi", emojis: emojis).emojis == emojis
+      refute Map.has_key?(Message.text("hi"), :emojis)
+    end
+
+    test "Message.video trackingId" do
+      assert Message.video("o", "p", tracking_id: "t").trackingId == "t"
+      refute Map.has_key?(Message.video("o", "p"), :trackingId)
+    end
+
+    test "Message.text_v2 quoteToken / substitution" do
+      msg = Message.text_v2("hi", quote_token: "q", substitution: %{"k" => %{}})
+      assert msg.quoteToken == "q"
+      assert msg.substitution == %{"k" => %{}}
+
+      plain = Message.text_v2("hi")
+      refute Map.has_key?(plain, :quoteToken)
+      refute Map.has_key?(plain, :substitution)
+    end
+
+    test "Template.carousel_column camelCase keys" do
+      default_action = Action.uri("Open", "https://x")
+
+      col =
+        Template.carousel_column("t", [],
+          title: "T",
+          thumbnail_image_url: "u",
+          image_background_color: "#fff",
+          default_action: default_action
+        )
+
+      assert col.title == "T"
+      assert col.thumbnailImageUrl == "u"
+      assert col.imageBackgroundColor == "#fff"
+      assert col.defaultAction == default_action
+
+      plain = Template.carousel_column("t", [])
+      refute Map.has_key?(plain, :thumbnailImageUrl)
+      refute Map.has_key?(plain, :defaultAction)
+    end
+
+    test "Template.carousel imageAspectRatio / imageSize" do
+      template =
+        Template.carousel([], image_aspect_ratio: "rectangle", image_size: "cover").template
+
+      assert template.imageAspectRatio == "rectangle"
+      assert template.imageSize == "cover"
+      refute Map.has_key?(Template.carousel([]).template, :imageAspectRatio)
+    end
+
+    test "Flex.image aspectRatio / aspectMode" do
+      img = Flex.image("u", aspect_ratio: "20:13", aspect_mode: "cover")
+      assert img.aspectRatio == "20:13"
+      assert img.aspectMode == "cover"
+      refute Map.has_key?(Flex.image("u"), :aspectRatio)
+    end
+
+    test "Flex.box paddingAll / backgroundColor" do
+      box = Flex.box(:vertical, [], padding_all: "10px", background_color: "#000")
+      assert box.paddingAll == "10px"
+      assert box.backgroundColor == "#000"
+      refute Map.has_key?(Flex.box(:vertical, []), :paddingAll)
+    end
+
+    test "Action.datetimepicker initial/max/min and mode atom → string" do
+      action =
+        Action.datetimepicker("L", "d", :date,
+          initial: "2026-01-01",
+          max: "2026-12-31",
+          min: "2026-01-01"
+        )
+
+      assert action.mode == "date"
+      assert action.initial == "2026-01-01"
+      assert action.max == "2026-12-31"
+      assert action.min == "2026-01-01"
+
+      refute Map.has_key?(Action.datetimepicker("L", "d", :time), :initial)
+    end
+  end
+
   # Conformance against LINE's official OpenAPI spec (see ExLine.Conformance).
   # Run all conformance checks with `mix test --only conformance`.
   describe "conformance" do
