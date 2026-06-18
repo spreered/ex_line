@@ -51,11 +51,11 @@
 
 > conformance（assert_conforms）驗的是「輸出/fixture 合 spec」；這裡反向驗「**我們有沒有把 spec 定義的每個欄位都抽出來**」。原則：**spec 定義什麼就驗什麼，缺的就補（建模）**，不做 allowlist 豁免。
 
-- [ ] `ExLine.Conformance.factory("SchemaName")`：走訪 vendored schema（解 `$ref`/`allOf`、巢狀物件/陣列、enum/format）產生**含所有欄位的 maximal JSON 實例**
-- [ ] `assert_fields_covered(struct, "SchemaName")`：`factory → parse → 斷言每個 spec property（camelCase→snake）都落到非 nil 的 struct 欄位`，缺的就紅
-- [ ] 套到 webhook event payload + message content struct；**把暴露出的漏抽欄位逐一補成 struct 欄位 + parse**（如 `TextMessageContent.markAsReadToken` 等）
-- [ ] allowlist（刻意不建模的豁免）**先不做**，僅在 helper 註解標記為未來可擴充
-- [ ] （outgoing builder 方向無法用 factory：builder 吃 Elixir 參數非 JSON → 改由 `line-spec-coverage` skill 做覆蓋率報告，report-only）
+- [x] `ExLine.Conformance.factory("SchemaName")`：走訪 vendored schema（解 `$ref`/`allOf`、巢狀物件/陣列、enum、防遞迴）產生**含所有欄位的 maximal JSON 實例**
+- [x] `assert_fields_covered(schema_name, type, parse_fun)`：`factory → parse → 斷言每個 spec property（camelCase→snake）都落到非 nil 的 struct 欄位`（discriminator `type` 由 struct identity 表示，排除）
+- [x] 套到 13 event + 7 message content；補上暴露的漏抽欄位：**7 種 content 全加 `mark_as_read_token`、Sticker 加 `quoted_message_id`**（event 13 種本來就全覆蓋）
+- [x] allowlist **先不做**，僅在 helper 註解標記為未來可擴充
+- [x] （outgoing builder 方向無法用 factory：builder 吃 Elixir 參數非 JSON → 留給 `line-spec-coverage` skill 做覆蓋率報告，report-only）
 
 > **覆蓋率快照（2026-06）**：
 > - `webhook.yml`：event 19/19、content 7/7、source 3/3 → **100% 解析覆蓋**

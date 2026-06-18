@@ -12,37 +12,47 @@ defmodule ExLine.Webhook.Message do
 
   defmodule Text do
     @moduledoc "Text message content."
-    defstruct [:id, :text, :emojis, :mention, :quote_token, :quoted_message_id, :raw]
+    defstruct [
+      :id,
+      :text,
+      :emojis,
+      :mention,
+      :quote_token,
+      :quoted_message_id,
+      :mark_as_read_token,
+      :raw
+    ]
+
     @type t :: %__MODULE__{}
   end
 
   defmodule Image do
     @moduledoc "Image message content."
-    defstruct [:id, :content_provider, :image_set, :quote_token, :raw]
+    defstruct [:id, :content_provider, :image_set, :quote_token, :mark_as_read_token, :raw]
     @type t :: %__MODULE__{}
   end
 
   defmodule Video do
     @moduledoc "Video message content."
-    defstruct [:id, :duration, :content_provider, :quote_token, :raw]
+    defstruct [:id, :duration, :content_provider, :quote_token, :mark_as_read_token, :raw]
     @type t :: %__MODULE__{}
   end
 
   defmodule Audio do
     @moduledoc "Audio message content."
-    defstruct [:id, :duration, :content_provider, :raw]
+    defstruct [:id, :duration, :content_provider, :mark_as_read_token, :raw]
     @type t :: %__MODULE__{}
   end
 
   defmodule File do
     @moduledoc "File message content."
-    defstruct [:id, :file_name, :file_size, :raw]
+    defstruct [:id, :file_name, :file_size, :mark_as_read_token, :raw]
     @type t :: %__MODULE__{}
   end
 
   defmodule Location do
     @moduledoc "Location message content."
-    defstruct [:id, :title, :address, :latitude, :longitude, :raw]
+    defstruct [:id, :title, :address, :latitude, :longitude, :mark_as_read_token, :raw]
     @type t :: %__MODULE__{}
   end
 
@@ -56,6 +66,8 @@ defmodule ExLine.Webhook.Message do
       :keywords,
       :text,
       :quote_token,
+      :quoted_message_id,
+      :mark_as_read_token,
       :raw
     ]
 
@@ -77,6 +89,7 @@ defmodule ExLine.Webhook.Message do
       mention: m["mention"],
       quote_token: m["quoteToken"],
       quoted_message_id: m["quotedMessageId"],
+      mark_as_read_token: m["markAsReadToken"],
       raw: m
     }
   end
@@ -87,6 +100,7 @@ defmodule ExLine.Webhook.Message do
       content_provider: m["contentProvider"],
       image_set: m["imageSet"],
       quote_token: m["quoteToken"],
+      mark_as_read_token: m["markAsReadToken"],
       raw: m
     }
   end
@@ -97,16 +111,29 @@ defmodule ExLine.Webhook.Message do
       duration: m["duration"],
       content_provider: m["contentProvider"],
       quote_token: m["quoteToken"],
+      mark_as_read_token: m["markAsReadToken"],
       raw: m
     }
   end
 
   def parse(%{"type" => "audio"} = m) do
-    %Audio{id: m["id"], duration: m["duration"], content_provider: m["contentProvider"], raw: m}
+    %Audio{
+      id: m["id"],
+      duration: m["duration"],
+      content_provider: m["contentProvider"],
+      mark_as_read_token: m["markAsReadToken"],
+      raw: m
+    }
   end
 
   def parse(%{"type" => "file"} = m) do
-    %File{id: m["id"], file_name: m["fileName"], file_size: m["fileSize"], raw: m}
+    %File{
+      id: m["id"],
+      file_name: m["fileName"],
+      file_size: m["fileSize"],
+      mark_as_read_token: m["markAsReadToken"],
+      raw: m
+    }
   end
 
   def parse(%{"type" => "location"} = m) do
@@ -116,6 +143,7 @@ defmodule ExLine.Webhook.Message do
       address: m["address"],
       latitude: m["latitude"],
       longitude: m["longitude"],
+      mark_as_read_token: m["markAsReadToken"],
       raw: m
     }
   end
@@ -129,6 +157,8 @@ defmodule ExLine.Webhook.Message do
       keywords: m["keywords"],
       text: m["text"],
       quote_token: m["quoteToken"],
+      quoted_message_id: m["quotedMessageId"],
+      mark_as_read_token: m["markAsReadToken"],
       raw: m
     }
   end
