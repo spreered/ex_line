@@ -12,19 +12,36 @@ defmodule ExLine.EventRouter do
       defmodule MyApp.LineRouter do
         use ExLine.EventRouter
 
-        text "hello", MyApp.HelpHandler, :hello         # text equal to "hello"
+        # Routes can also match on the assigns set by before_action/2 (e.g. the
+        # loaded current_user) — declare the more specific route first.
+        text "menu", %{current_user: %{role: :admin}}, MyApp.AdminHandler, :menu
+        text "menu", MyApp.MenuHandler, :menu
+
         message :image, MyApp.MediaHandler, :on_image   # any image message
         postback "buy", MyApp.ShopHandler, :buy
         follow MyApp.OnboardHandler, :welcome
         unfollow MyApp.OnboardHandler, :goodbye
-        default MyApp.FallbackHandler, :unknown         # REQUIRED: also catches UnknownEvent
+        default MyApp.FallbackHandler, :unknown         # REQUIRED: also catches Event.Unknown
 
+        # Preprocess every event before it is matched: load the current user from
+        # the event's source and stash the messaging client for handlers to use.
         @impl true
-        def before_action(event, assigns), do: {event, Map.put(assigns, :client, MyApp.client())}
+        def before_action(event, assigns) do
+          user =
+            case event.source do
+              %ExLine.Webhook.Source{user_id: id} when is_binary(id) ->
+                MyApp.Accounts.get_by_line_id(id)
+
+              _ ->
+                nil
+            end
+
+          {event, assigns |> Map.put(:current_user, user) |> Map.put(:client, MyApp.client())}
+        end
       end
 
-      event |> ExLine.Webhook.parse() ... # or parse the whole body
-      MyApp.LineRouter.call(parsed_event, %{})
+      # In your webhook controller (after ExLine.Webhook.Signature has verified it):
+      params["events"] |> ExLine.Webhook.parse() |> Enum.each(&MyApp.LineRouter.call/1)
 
   Because LINE adds event types without notice (and unknown types become
   `ExLine.Webhook.Event.Unknown`), always declare a `default/2` route so unmatched
