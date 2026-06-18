@@ -47,6 +47,16 @@
 - [x] **建 `line-spec-coverage` skill**：(a) 依 commit 更新 vendored spec + diff；(b) 解析 spec operationId/訊息子型別 比對已實作，產出覆蓋率表（對應 namespace + 缺項），對照 milestone
 - [ ] TDD loop 確立：之後 M2 每加一型別先寫 `assert_conforms` → 紅 → 實作 → 綠；LINE 改版則重 vendor yaml → diff → 重跑 → 修紅
 
+### M1.6 — 欄位完整性檢查（incoming，factory 法）
+
+> conformance（assert_conforms）驗的是「輸出/fixture 合 spec」；這裡反向驗「**我們有沒有把 spec 定義的每個欄位都抽出來**」。原則：**spec 定義什麼就驗什麼，缺的就補（建模）**，不做 allowlist 豁免。
+
+- [ ] `ExLine.Conformance.factory("SchemaName")`：走訪 vendored schema（解 `$ref`/`allOf`、巢狀物件/陣列、enum/format）產生**含所有欄位的 maximal JSON 實例**
+- [ ] `assert_fields_covered(struct, "SchemaName")`：`factory → parse → 斷言每個 spec property（camelCase→snake）都落到非 nil 的 struct 欄位`，缺的就紅
+- [ ] 套到 webhook event payload + message content struct；**把暴露出的漏抽欄位逐一補成 struct 欄位 + parse**（如 `TextMessageContent.markAsReadToken` 等）
+- [ ] allowlist（刻意不建模的豁免）**先不做**，僅在 helper 註解標記為未來可擴充
+- [ ] （outgoing builder 方向無法用 factory：builder 吃 Elixir 參數非 JSON → 改由 `line-spec-coverage` skill 做覆蓋率報告，report-only）
+
 > **覆蓋率快照（2026-06）**：
 > - `webhook.yml`：event 19/19、content 7/7、source 3/3 → **100% 解析覆蓋**
 > - `messaging-api.yml`：endpoint 16/73（~22%）；訊息物件 10/11（缺 coupon）、template 4/4、action 9/9、Flex ✅
