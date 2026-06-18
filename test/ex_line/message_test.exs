@@ -62,6 +62,11 @@ defmodule ExLine.MessageTest do
       refute Map.has_key?(Message.video("o", "p"), :trackingId)
     end
 
+    test "Message.coupon deliveryTag" do
+      assert Message.coupon("c", delivery_tag: "promo").deliveryTag == "promo"
+      refute Map.has_key?(Message.coupon("c"), :deliveryTag)
+    end
+
     test "Message.text_v2 quoteToken / substitution" do
       msg = Message.text_v2("hi", quote_token: "q", substitution: %{"k" => %{}})
       assert msg.quoteToken == "q"
@@ -144,6 +149,10 @@ defmodule ExLine.MessageTest do
 
     test "sticker → StickerMessage" do
       assert_conforms(Message.sticker("446", "1988"), "StickerMessage")
+    end
+
+    test "coupon → CouponMessage" do
+      assert_conforms(Message.coupon("cpn-1", delivery_tag: "promo"), "CouponMessage")
     end
 
     test "text_v2 → TextMessageV2" do

@@ -142,6 +142,20 @@ defmodule ExLine.Message do
   end
 
   @doc """
+  Coupon message. Option `:delivery_tag` (route tag for LINE OA Manager analysis).
+
+  Ref: https://developers.line.biz/en/reference/messaging-api/#coupon-message
+
+      iex> ExLine.Message.coupon("cpn-1")
+      %{type: "coupon", couponId: "cpn-1"}
+  """
+  @spec coupon(String.t(), keyword()) :: map()
+  def coupon(coupon_id, opts \\ []) do
+    %{type: "coupon", couponId: coupon_id}
+    |> maybe_put(:deliveryTag, opts[:delivery_tag])
+  end
+
+  @doc """
   Attaches quick reply actions to a message object.
 
   Ref: https://developers.line.biz/en/docs/messaging-api/using-quick-reply/

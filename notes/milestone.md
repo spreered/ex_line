@@ -59,7 +59,7 @@
 
 > **覆蓋率快照（2026-06）**：
 > - `webhook.yml`：event 19/19、content 7/7、source 3/3 → **100% 解析覆蓋**
-> - `messaging-api.yml`：endpoint 16/73（~22%）；訊息物件 10/11（缺 coupon）、template 4/4、action 9/9、Flex ✅
+> - `messaging-api.yml`：endpoint 16/73（~22%）；訊息物件 **11/11**、template 4/4、action 9/9、Flex ✅
 > - 已串 endpoint：reply/push/multicast、content×3、profile/followers、bot info、quota×2、sent_count×4、loading
 > - 未串大塊：rich menu(~23)、broadcast/narrowcast、group/room、validate*、membership/coupon/insight/audience/accountLink（見 M3/M4）
 > **待補的其他 spec**：channel-access-token.yml（M3 token）、insight.yml / manage-audience.yml（M4）、liff.yml（Plan 2）。（messaging-api.yml + webhook.yml 已 vendor）
@@ -68,7 +68,7 @@
 
 - [x] `ExLine.Messaging.reply/4`、`push/4`、`multicast/4`（reply/push 於 M1 完成；multicast 新增，含 retry_key 與 notification_disabled）
 - [x] 訊息 builder 補齊：`image` / `video` / `audio` / `location` / `imagemap` / `textV2`（mention/substitution）（`text`/`sticker` 已完成）
-- [ ] **coupon message type**（補滿訊息物件 11/11）→ 優先補
+- [x] **coupon message type**（`ExLine.Message.coupon/2`，含 `delivery_tag`）→ 訊息物件達 11/11
 - [x] text 強化：`emojis`、`quoteToken`（引用回覆）支援
 - [x] template 補齊：`carousel` / `image_carousel`（`buttons`/`confirm` 已完成）
 - [x] action builder 補齊：`datetimepicker` / `camera` / `camera_roll` / `location` / `richmenu_switch` / `clipboard`（`message`/`postback`/`uri` 已完成）

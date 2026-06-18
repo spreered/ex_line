@@ -86,12 +86,24 @@ commit). Validate builder/request output with `ExLine.Conformance.assert_conform
 `parent + allOf` polymorphism shape that open_api_spex's discriminator cast can't
 handle, and we always validate against a concrete schema name).
 
-- **Spec-driven TDD loop** for anything that maps to a LINE schema (message types,
-  templates, actions, request bodies): write the `assert_conforms(..., "SchemaName")`
-  test first (red), then implement until green.
+There are two directions, both spec-driven and both run by `mix test --only conformance`:
+
+- **Outgoing (builders/requests) — `assert_conforms/2`.** Spec-driven TDD loop for
+  anything we *send* (message types, templates, actions, request bodies): write the
+  `assert_conforms(builder_output, "SchemaName")` test first (red), then implement
+  until green. Checks "our output matches the spec".
+- **Incoming (webhook parsing) — `assert_fields_covered/3`.** For anything we *parse*
+  (webhook event / message content types): write
+  `assert_fields_covered("SchemaName", type, &parse_fun/1)` first (red), then add the
+  struct + parse clause until green. It generates a maximal instance from the schema
+  (`ExLine.Conformance.factory/1`), parses it, and asserts every spec field lands in a
+  non-nil struct field. **Adding a new webhook type = register it in the factory test
+  list (`@content`/`@events` in `webhook_fields_test.exs`).** Principle: model whatever
+  the spec defines (no allowlist).
 - **When LINE updates the spec:** re-vendor the YAML (bump the pinned commit),
-  `git diff` to see what changed, re-run `mix test`. Code that violates a new
-  constraint turns its conformance test red — fix, then commit. No regeneration.
+  `git diff` to see what changed, re-run `mix test`. A spec change turns the relevant
+  test red — outgoing format drift (`assert_conforms`) *and* incoming missing fields
+  (`assert_fields_covered`). Fix, then commit. No regeneration.
 - **Test structure:** conformance tests live in each module's own test file inside a
   `describe "conformance" do @describetag :conformance ... end` block (not a separate
   file), so adding a type touches one file. Run all of them with
