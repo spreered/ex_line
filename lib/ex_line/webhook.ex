@@ -23,17 +23,28 @@ defmodule ExLine.Webhook do
   """
 
   alias ExLine.Webhook.{
+    AccountLinkEvent,
+    ActivatedEvent,
+    BeaconEvent,
+    BotResumedEvent,
+    BotSuspendedEvent,
+    DeactivatedEvent,
     FollowEvent,
     JoinEvent,
     LeaveEvent,
     MemberJoinedEvent,
     MemberLeftEvent,
+    MembershipEvent,
     Message,
     MessageEvent,
+    ModuleEvent,
+    PnpDeliveryCompletionEvent,
     PostbackEvent,
     Source,
     UnfollowEvent,
-    UnknownEvent
+    UnknownEvent,
+    UnsendEvent,
+    VideoPlayCompleteEvent
   }
 
   @type event ::
@@ -45,6 +56,17 @@ defmodule ExLine.Webhook do
           | LeaveEvent.t()
           | MemberJoinedEvent.t()
           | MemberLeftEvent.t()
+          | UnsendEvent.t()
+          | VideoPlayCompleteEvent.t()
+          | BeaconEvent.t()
+          | AccountLinkEvent.t()
+          | MembershipEvent.t()
+          | ActivatedEvent.t()
+          | DeactivatedEvent.t()
+          | BotSuspendedEvent.t()
+          | BotResumedEvent.t()
+          | ModuleEvent.t()
+          | PnpDeliveryCompletionEvent.t()
           | UnknownEvent.t()
 
   @doc """
@@ -107,6 +129,57 @@ defmodule ExLine.Webhook do
 
   defp do_parse_event(%{"type" => "memberLeft"} = raw) do
     struct(MemberLeftEvent, [{:left, members(raw["left"])} | common(raw)])
+  end
+
+  defp do_parse_event(%{"type" => "unsend"} = raw) do
+    struct(UnsendEvent, [{:unsend, raw["unsend"]} | common(raw)])
+  end
+
+  defp do_parse_event(%{"type" => "videoPlayComplete"} = raw) do
+    struct(VideoPlayCompleteEvent, [
+      {:reply_token, raw["replyToken"]},
+      {:video_play_complete, raw["videoPlayComplete"]} | common(raw)
+    ])
+  end
+
+  defp do_parse_event(%{"type" => "beacon"} = raw) do
+    struct(BeaconEvent, [
+      {:reply_token, raw["replyToken"]},
+      {:beacon, raw["beacon"]} | common(raw)
+    ])
+  end
+
+  defp do_parse_event(%{"type" => "accountLink"} = raw) do
+    struct(AccountLinkEvent, [
+      {:reply_token, raw["replyToken"]},
+      {:link, raw["link"]} | common(raw)
+    ])
+  end
+
+  defp do_parse_event(%{"type" => "membership"} = raw) do
+    struct(MembershipEvent, [
+      {:reply_token, raw["replyToken"]},
+      {:membership, raw["membership"]} | common(raw)
+    ])
+  end
+
+  defp do_parse_event(%{"type" => "activated"} = raw) do
+    struct(ActivatedEvent, [{:chat_control, raw["chatControl"]} | common(raw)])
+  end
+
+  defp do_parse_event(%{"type" => "deactivated"} = raw), do: struct(DeactivatedEvent, common(raw))
+
+  defp do_parse_event(%{"type" => "botSuspended"} = raw),
+    do: struct(BotSuspendedEvent, common(raw))
+
+  defp do_parse_event(%{"type" => "botResumed"} = raw), do: struct(BotResumedEvent, common(raw))
+
+  defp do_parse_event(%{"type" => "module"} = raw) do
+    struct(ModuleEvent, [{:module, raw["module"]} | common(raw)])
+  end
+
+  defp do_parse_event(%{"type" => "delivery"} = raw) do
+    struct(PnpDeliveryCompletionEvent, [{:delivery, raw["delivery"]} | common(raw)])
   end
 
   defp do_parse_event(%{"type" => type} = raw),

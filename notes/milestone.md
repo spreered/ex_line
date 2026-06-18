@@ -72,7 +72,7 @@
 - [x] fallback：未知事件 → `%ExLine.Webhook.UnknownEvent{type, raw}`；未知 message content → `ExLine.Webhook.Message.Unknown`
 - [x] **每個 event/message struct 都帶 `raw:` 原始 map**
 - [x] `ExLine.EventRouter` 改寫成 match struct + matcher 擴充：`text "..."`、`message :kind`、`postback`、`follow`/`unfollow`/`join`/`leave`/`member_joined`/`member_left`、強制 `default`
-- [ ] 長尾事件（beacon/accountLink/membership/activated/deactivated/botResumed/botSuspended/module/pnp/unsend/videoPlayComplete）先走 `UnknownEvent`，之後逐一補正式 struct（選配）
+- [x] 其餘事件型別（unsend/videoPlayComplete/beacon/accountLink/membership/activated/deactivated/botSuspended/botResumed/module/delivery(PNP)）也補成正式 struct + parse + router matcher
 - [x] **驗收**：fixture 符合 `CallbackRequest`；`parse/1` 對已知/未知/壞掉 payload 都不 raise；EventRouter 正確 dispatch（含 UnknownEvent → default）（135 passed）
 
 > **app glue（非 SDK 核心，文件/generator 說明）**：controller 先回 200、用 supervised async task 逐 event 處理、失敗隔離（hawk 的 `Task.Supervisor.async_nolink` 模式）。

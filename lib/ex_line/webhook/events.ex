@@ -117,9 +117,159 @@ defmodule ExLine.Webhook.MemberLeftEvent do
   @type t :: %__MODULE__{}
 end
 
+defmodule ExLine.Webhook.UnsendEvent do
+  @moduledoc "A user unsent (withdrew) a message. `unsend` is `%{\"messageId\" => ...}`."
+  defstruct [
+    :type,
+    :mode,
+    :timestamp,
+    :source,
+    :webhook_event_id,
+    :delivery_context,
+    :unsend,
+    :raw
+  ]
+
+  @type t :: %__MODULE__{}
+end
+
+defmodule ExLine.Webhook.VideoPlayCompleteEvent do
+  @moduledoc "A user finished playing a video message (with a tracking id)."
+  defstruct [
+    :type,
+    :mode,
+    :timestamp,
+    :source,
+    :webhook_event_id,
+    :delivery_context,
+    :reply_token,
+    :video_play_complete,
+    :raw
+  ]
+
+  @type t :: %__MODULE__{}
+end
+
+defmodule ExLine.Webhook.BeaconEvent do
+  @moduledoc "A user entered the range of a LINE Beacon. `beacon` holds hwid/type/dm."
+  defstruct [
+    :type,
+    :mode,
+    :timestamp,
+    :source,
+    :webhook_event_id,
+    :delivery_context,
+    :reply_token,
+    :beacon,
+    :raw
+  ]
+
+  @type t :: %__MODULE__{}
+end
+
+defmodule ExLine.Webhook.AccountLinkEvent do
+  @moduledoc "Result of an account link (link token flow). `link` holds result/nonce."
+  defstruct [
+    :type,
+    :mode,
+    :timestamp,
+    :source,
+    :webhook_event_id,
+    :delivery_context,
+    :reply_token,
+    :link,
+    :raw
+  ]
+
+  @type t :: %__MODULE__{}
+end
+
+defmodule ExLine.Webhook.MembershipEvent do
+  @moduledoc "A change to a user's paid membership for the account. `membership` holds the change."
+  defstruct [
+    :type,
+    :mode,
+    :timestamp,
+    :source,
+    :webhook_event_id,
+    :delivery_context,
+    :reply_token,
+    :membership,
+    :raw
+  ]
+
+  @type t :: %__MODULE__{}
+end
+
+defmodule ExLine.Webhook.ActivatedEvent do
+  @moduledoc "A module channel was activated (gained chat control). `chat_control` holds the window."
+  defstruct [
+    :type,
+    :mode,
+    :timestamp,
+    :source,
+    :webhook_event_id,
+    :delivery_context,
+    :chat_control,
+    :raw
+  ]
+
+  @type t :: %__MODULE__{}
+end
+
+defmodule ExLine.Webhook.DeactivatedEvent do
+  @moduledoc "A module channel was deactivated (lost chat control)."
+  defstruct [:type, :mode, :timestamp, :source, :webhook_event_id, :delivery_context, :raw]
+  @type t :: %__MODULE__{}
+end
+
+defmodule ExLine.Webhook.BotSuspendedEvent do
+  @moduledoc "The bot was suspended (e.g. a chat was handed to a human operator)."
+  defstruct [:type, :mode, :timestamp, :source, :webhook_event_id, :delivery_context, :raw]
+  @type t :: %__MODULE__{}
+end
+
+defmodule ExLine.Webhook.BotResumedEvent do
+  @moduledoc "The bot was resumed."
+  defstruct [:type, :mode, :timestamp, :source, :webhook_event_id, :delivery_context, :raw]
+  @type t :: %__MODULE__{}
+end
+
+defmodule ExLine.Webhook.ModuleEvent do
+  @moduledoc "A module channel event (attach/detach, etc.). `module` holds the details."
+  defstruct [
+    :type,
+    :mode,
+    :timestamp,
+    :source,
+    :webhook_event_id,
+    :delivery_context,
+    :module,
+    :raw
+  ]
+
+  @type t :: %__MODULE__{}
+end
+
+defmodule ExLine.Webhook.PnpDeliveryCompletionEvent do
+  @moduledoc "Delivery completion for a LINE notification message (PNP). `delivery` holds the data."
+  defstruct [
+    :type,
+    :mode,
+    :timestamp,
+    :source,
+    :webhook_event_id,
+    :delivery_context,
+    :delivery,
+    :raw
+  ]
+
+  @type t :: %__MODULE__{}
+end
+
 defmodule ExLine.Webhook.UnknownEvent do
   @moduledoc """
-  Fallback for an event type ExLine does not model (a long-tail or newly added type).
+  Fallback for an event type ExLine does not model (a less common or newly added type).
 
   The common envelope is still parsed; the full payload is in `raw`.
   """

@@ -73,8 +73,8 @@ defmodule ExLine.WebhookTest do
 
   describe "parse/1 is total (forward compatibility)" do
     test "unknown event type → UnknownEvent (keeps envelope + raw)" do
-      raw = %{"type" => "beacon", "beacon" => %{"hwid" => "x"}, "mode" => "active"}
-      assert %UnknownEvent{type: "beacon", mode: "active", raw: ^raw} = Webhook.parse_event(raw)
+      raw = %{"type" => "things", "things" => %{"x" => 1}, "mode" => "active"}
+      assert %UnknownEvent{type: "things", mode: "active", raw: ^raw} = Webhook.parse_event(raw)
     end
 
     test "unknown message content type → Message.Unknown" do
@@ -103,6 +103,42 @@ defmodule ExLine.WebhookTest do
 
     test "non-webhook input returns []" do
       assert Webhook.parse(%{"foo" => "bar"}) == []
+    end
+  end
+
+  describe "parse/1 additional event types" do
+    @additional_events [
+      {%{"type" => "unsend", "unsend" => %{"messageId" => "m"}}, Webhook.UnsendEvent},
+      {%{"type" => "videoPlayComplete", "videoPlayComplete" => %{"trackingId" => "t"}},
+       Webhook.VideoPlayCompleteEvent},
+      {%{"type" => "beacon", "beacon" => %{"hwid" => "h"}}, Webhook.BeaconEvent},
+      {%{"type" => "accountLink", "link" => %{"result" => "ok", "nonce" => "n"}},
+       Webhook.AccountLinkEvent},
+      {%{"type" => "membership", "membership" => %{"membershipId" => 1}},
+       Webhook.MembershipEvent},
+      {%{"type" => "activated", "chatControl" => %{"expireAt" => 1}}, Webhook.ActivatedEvent},
+      {%{"type" => "deactivated"}, Webhook.DeactivatedEvent},
+      {%{"type" => "botSuspended"}, Webhook.BotSuspendedEvent},
+      {%{"type" => "botResumed"}, Webhook.BotResumedEvent},
+      {%{"type" => "module", "module" => %{"type" => "attached"}}, Webhook.ModuleEvent},
+      {%{"type" => "delivery", "delivery" => %{"data" => "d"}},
+       Webhook.PnpDeliveryCompletionEvent}
+    ]
+
+    test "each additional event type parses to its own struct, keeping raw" do
+      for {raw, mod} <- @additional_events do
+        event = Webhook.parse_event(raw)
+        assert event.__struct__ == mod
+        assert event.raw == raw
+      end
+    end
+
+    test "payload fields are mapped" do
+      assert %Webhook.UnsendEvent{unsend: %{"messageId" => "m"}} =
+               Webhook.parse_event(%{"type" => "unsend", "unsend" => %{"messageId" => "m"}})
+
+      assert %Webhook.BeaconEvent{beacon: %{"hwid" => "h"}} =
+               Webhook.parse_event(%{"type" => "beacon", "beacon" => %{"hwid" => "h"}})
     end
   end
 

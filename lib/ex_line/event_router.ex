@@ -163,6 +163,101 @@ defmodule ExLine.EventRouter do
     )
   end
 
+  @doc "Routes an unsend event."
+  defmacro unsend(assign_match \\ quote(do: %{}), handler, action) do
+    generate_match_event(quote(do: %ExLine.Webhook.UnsendEvent{}), assign_match, handler, action)
+  end
+
+  @doc "Routes a video-play-complete event."
+  defmacro video_play_complete(assign_match \\ quote(do: %{}), handler, action) do
+    generate_match_event(
+      quote(do: %ExLine.Webhook.VideoPlayCompleteEvent{}),
+      assign_match,
+      handler,
+      action
+    )
+  end
+
+  @doc "Routes a beacon event."
+  defmacro beacon(assign_match \\ quote(do: %{}), handler, action) do
+    generate_match_event(quote(do: %ExLine.Webhook.BeaconEvent{}), assign_match, handler, action)
+  end
+
+  @doc "Routes an account-link event."
+  defmacro account_link(assign_match \\ quote(do: %{}), handler, action) do
+    generate_match_event(
+      quote(do: %ExLine.Webhook.AccountLinkEvent{}),
+      assign_match,
+      handler,
+      action
+    )
+  end
+
+  @doc "Routes a membership event."
+  defmacro membership(assign_match \\ quote(do: %{}), handler, action) do
+    generate_match_event(
+      quote(do: %ExLine.Webhook.MembershipEvent{}),
+      assign_match,
+      handler,
+      action
+    )
+  end
+
+  @doc "Routes a module-channel activated event."
+  defmacro activated(assign_match \\ quote(do: %{}), handler, action) do
+    generate_match_event(
+      quote(do: %ExLine.Webhook.ActivatedEvent{}),
+      assign_match,
+      handler,
+      action
+    )
+  end
+
+  @doc "Routes a module-channel deactivated event."
+  defmacro deactivated(assign_match \\ quote(do: %{}), handler, action) do
+    generate_match_event(
+      quote(do: %ExLine.Webhook.DeactivatedEvent{}),
+      assign_match,
+      handler,
+      action
+    )
+  end
+
+  @doc "Routes a bot-suspended event."
+  defmacro bot_suspended(assign_match \\ quote(do: %{}), handler, action) do
+    generate_match_event(
+      quote(do: %ExLine.Webhook.BotSuspendedEvent{}),
+      assign_match,
+      handler,
+      action
+    )
+  end
+
+  @doc "Routes a bot-resumed event."
+  defmacro bot_resumed(assign_match \\ quote(do: %{}), handler, action) do
+    generate_match_event(
+      quote(do: %ExLine.Webhook.BotResumedEvent{}),
+      assign_match,
+      handler,
+      action
+    )
+  end
+
+  @doc "Routes a module-channel event."
+  defmacro module(assign_match \\ quote(do: %{}), handler, action) do
+    generate_match_event(quote(do: %ExLine.Webhook.ModuleEvent{}), assign_match, handler, action)
+  end
+
+  @doc "Routes a PNP (LINE notification message) delivery-completion event."
+  defmacro pnp_delivery_completion(assign_match \\ quote(do: %{}), handler, action) do
+    generate_match_event(
+      quote(do: %ExLine.Webhook.PnpDeliveryCompletionEvent{}),
+      assign_match,
+      handler,
+      action
+    )
+  end
+
   @doc "Catch-all route for any unmatched event (also catches `UnknownEvent`)."
   defmacro default(handler, action) do
     generate_match_event(quote(do: _), quote(do: _), handler, action)

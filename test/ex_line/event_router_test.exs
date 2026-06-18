@@ -23,6 +23,8 @@ defmodule ExLine.EventRouterTest do
     postback("buy", EchoHandler, :buy)
     follow(EchoHandler, :welcome)
     member_joined(EchoHandler, :greet)
+    unsend(EchoHandler, :unsent)
+    beacon(EchoHandler, :on_beacon)
     default(EchoHandler, :fallback)
 
     @impl true
@@ -66,9 +68,17 @@ defmodule ExLine.EventRouterTest do
     assert_received {:handled, :greet, %Webhook.MemberJoinedEvent{}, _assigns}
   end
 
-  test "unknown event type falls through to default" do
+  test "routes additional event types by name (unsend, beacon)" do
+    route(%{"type" => "unsend", "unsend" => %{"messageId" => "m"}})
+    assert_received {:handled, :unsent, %Webhook.UnsendEvent{}, _}
+
     route(%{"type" => "beacon", "beacon" => %{"hwid" => "x"}})
-    assert_received {:handled, :fallback, %Webhook.UnknownEvent{type: "beacon"}, _assigns}
+    assert_received {:handled, :on_beacon, %Webhook.BeaconEvent{}, _}
+  end
+
+  test "a still-unmodelled event type falls through to default as UnknownEvent" do
+    route(%{"type" => "things", "things" => %{}})
+    assert_received {:handled, :fallback, %Webhook.UnknownEvent{type: "things"}, _assigns}
   end
 
   test "a text other than the matched literal falls through to default" do
