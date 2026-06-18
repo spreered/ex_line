@@ -1,84 +1,17 @@
 defmodule ExLine.Webhook.Message do
   @moduledoc """
-  Parsed message content of a `ExLine.Webhook.MessageEvent`.
+  Parses the message content of an `ExLine.Webhook.MessageEvent`.
 
-  Each content type is its own struct (`Text`, `Image`, `Video`, `Audio`, `File`,
-  `Location`, `Sticker`); an unrecognized content type degrades to `Unknown` so a new
-  LINE message type never breaks parsing. Every struct keeps the original `raw` map,
-  so fields not yet modelled are still reachable.
+  Each content type is its own struct (`ExLine.Webhook.Message.Text`, `.Image`,
+  `.Video`, `.Audio`, `.File`, `.Location`, `.Sticker`); an unrecognized content type
+  degrades to `ExLine.Webhook.Message.Unknown` so a new LINE message type never breaks
+  parsing. Every struct keeps the original `raw` map, so fields not yet modelled are
+  still reachable.
 
   Ref: https://developers.line.biz/en/reference/messaging-api/#message-event
   """
 
-  defmodule Text do
-    @moduledoc "Text message content."
-    defstruct [
-      :id,
-      :text,
-      :emojis,
-      :mention,
-      :quote_token,
-      :quoted_message_id,
-      :mark_as_read_token,
-      :raw
-    ]
-
-    @type t :: %__MODULE__{}
-  end
-
-  defmodule Image do
-    @moduledoc "Image message content."
-    defstruct [:id, :content_provider, :image_set, :quote_token, :mark_as_read_token, :raw]
-    @type t :: %__MODULE__{}
-  end
-
-  defmodule Video do
-    @moduledoc "Video message content."
-    defstruct [:id, :duration, :content_provider, :quote_token, :mark_as_read_token, :raw]
-    @type t :: %__MODULE__{}
-  end
-
-  defmodule Audio do
-    @moduledoc "Audio message content."
-    defstruct [:id, :duration, :content_provider, :mark_as_read_token, :raw]
-    @type t :: %__MODULE__{}
-  end
-
-  defmodule File do
-    @moduledoc "File message content."
-    defstruct [:id, :file_name, :file_size, :mark_as_read_token, :raw]
-    @type t :: %__MODULE__{}
-  end
-
-  defmodule Location do
-    @moduledoc "Location message content."
-    defstruct [:id, :title, :address, :latitude, :longitude, :mark_as_read_token, :raw]
-    @type t :: %__MODULE__{}
-  end
-
-  defmodule Sticker do
-    @moduledoc "Sticker message content."
-    defstruct [
-      :id,
-      :package_id,
-      :sticker_id,
-      :sticker_resource_type,
-      :keywords,
-      :text,
-      :quote_token,
-      :quoted_message_id,
-      :mark_as_read_token,
-      :raw
-    ]
-
-    @type t :: %__MODULE__{}
-  end
-
-  defmodule Unknown do
-    @moduledoc "Fallback for an unrecognized message content type."
-    defstruct [:type, :id, :raw]
-    @type t :: %__MODULE__{}
-  end
+  alias ExLine.Webhook.Message.{Audio, File, Image, Location, Sticker, Text, Unknown, Video}
 
   @doc false
   def parse(%{"type" => "text"} = m) do
