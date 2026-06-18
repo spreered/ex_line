@@ -47,13 +47,18 @@
 - [x] **建 `line-spec-coverage` skill**：(a) 依 commit 更新 vendored spec + diff；(b) 解析 spec operationId/訊息子型別 比對已實作，產出覆蓋率表（對應 namespace + 缺項），對照 milestone
 - [ ] TDD loop 確立：之後 M2 每加一型別先寫 `assert_conforms` → 紅 → 實作 → 綠；LINE 改版則重 vendor yaml → diff → 重跑 → 修紅
 
-> **覆蓋率快照（2026-06，messaging-api.yml）**：endpoint 3/73、訊息 3/11、template 2/4、action 3/9。缺的訊息型別（textV2/image/video/audio/location/imagemap/flex/coupon）是 M2 主菜。
-> **待補的其他 spec**：webhook.yml（M2 event）、channel-access-token.yml（M3 token）、insight.yml / manage-audience.yml（M4）、liff.yml（Plan 2）。
+> **覆蓋率快照（2026-06）**：
+> - `webhook.yml`：event 19/19、content 7/7、source 3/3 → **100% 解析覆蓋**
+> - `messaging-api.yml`：endpoint 16/73（~22%）；訊息物件 10/11（缺 coupon）、template 4/4、action 9/9、Flex ✅
+> - 已串 endpoint：reply/push/multicast、content×3、profile/followers、bot info、quota×2、sent_count×4、loading
+> - 未串大塊：rich menu(~23)、broadcast/narrowcast、group/room、validate*、membership/coupon/insight/audience/accountLink（見 M3/M4）
+> **待補的其他 spec**：channel-access-token.yml（M3 token）、insight.yml / manage-audience.yml（M4）、liff.yml（Plan 2）。（messaging-api.yml + webhook.yml 已 vendor）
 
 ## M2 — Phase 1：核心 API
 
 - [x] `ExLine.Messaging.reply/4`、`push/4`、`multicast/4`（reply/push 於 M1 完成；multicast 新增，含 retry_key 與 notification_disabled）
-- [x] 訊息 builder 補齊：`image` / `video` / `audio` / `location` / `imagemap` / `textV2`（mention/substitution）（`text`/`sticker` 已完成；`coupon` 訊息少用，列選配）
+- [x] 訊息 builder 補齊：`image` / `video` / `audio` / `location` / `imagemap` / `textV2`（mention/substitution）（`text`/`sticker` 已完成）
+- [ ] **coupon message type**（補滿訊息物件 11/11）→ 優先補
 - [x] text 強化：`emojis`、`quoteToken`（引用回覆）支援
 - [x] template 補齊：`carousel` / `image_carousel`（`buttons`/`confirm` 已完成）
 - [x] action builder 補齊：`datetimepicker` / `camera` / `camera_roll` / `location` / `richmenu_switch` / `clipboard`（`message`/`postback`/`uri` 已完成）
@@ -81,22 +86,26 @@
 
 ## M3 — Phase 2：進階
 
-- [ ] `broadcast` / `narrowcast` + narrowcast progress
-- [ ] `validate_*`（reply/push/multicast/narrowcast/broadcast 送出前驗證）
-- [ ] `*_count`（reply/push/multicast/broadcast）
+> 建議優先序（價值×成本）：**broadcast/narrowcast（快又有價值）→ Rich menu（最有價值但最大塊）** → Group/Room、webhook 設定（小品穿插）→ validate*（本地 conformance 已驗格式，往後排）。
+
+- [ ] `broadcast` / `narrowcast` + narrowcast progress（複用 push 的 `handle_send`）
 - [ ] `ExLine.RichMenu`：CRUD / per-user / alias / bulk（含 api-data 圖片上傳）
 - [ ] `ExLine.Group`：group / room summary / members / leave
-- [ ] Token provider（選配）：`ExLine.Auth.V2_1`（JWT 換發/key id/撤銷）、`ExLine.Auth.Stateless`；`ExLine.Client` 支援動態取 token（可能需要 supervision tree → 屆時補 `--sup`/`application`）
+- [ ] **webhook endpoint 設定**：get / set / test（`ExLine.Webhook`）← 原本漏列
+- [ ] **markMessagesAsRead / markMessagesAsReadByToken / pushMessagesByPhone**（`ExLine.Messaging`）← 原本漏列
+- [ ] `validate_*`（reply/push/multicast/narrowcast/broadcast 送出前驗證）— 優先序低（本地 conformance 已驗格式）
+- [x] `*_count`（reply/push/multicast/broadcast）— 已於 M2 用 `sent_count/3` 完成
+- [ ] Token provider（選配）：`ExLine.Auth.V2_1`（JWT 換發/key id/撤銷）、`ExLine.Auth.Stateless`；`ExLine.Client` 支援動態取 token（需 vendor `channel-access-token.yml`；可能需 supervision tree → 屆時補 `--sup`/`application`）
 - [ ] retry/backoff 依 endpoint rate limit 分級
 
 ## M4 — Phase 3：少用
 
-- [ ] `ExLine.Audience`（受眾管理）
-- [ ] `ExLine.Insight`（統計）
-- [ ] `ExLine.Membership`
-- [ ] `ExLine.Coupon`
-- [ ] `ExLine.AccountLink`（link token）
-- [ ] beacon / membership 等 webhook event 補完
+- [ ] `ExLine.Audience`（受眾管理）— 端點在 **`manage-audience.yml`**（需另 vendor），不在 messaging-api.yml
+- [ ] `ExLine.Insight`（統計）：`getPNPMessageStatistics` / aggregation unit（name list / usage）等
+- [ ] `ExLine.Membership`：getJoinedMembershipUsers / getMembershipList / getMembershipSubscription
+- [ ] `ExLine.Coupon`（coupon **管理 API**：create/close/list/detail，≠ coupon message type）
+- [ ] `ExLine.AccountLink`（issueLinkToken）
+- [x] webhook event 全型別補完（含 beacon/membership/unsend/…，已於 M2 完成）
 
 ### ✅ Messaging API 告一段落檢查點
 
