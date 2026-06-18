@@ -1,5 +1,5 @@
-defmodule ExLine.Webhook.PostbackEvent do
-  @moduledoc "A postback action fired. `postback` is `%{data: ..., params: ...}`."
+defmodule ExLine.Webhook.Event.Join do
+  @moduledoc "The bot joined a group or room."
   defstruct [
     :type,
     :mode,
@@ -8,7 +8,6 @@ defmodule ExLine.Webhook.PostbackEvent do
     :webhook_event_id,
     :delivery_context,
     :reply_token,
-    :postback,
     :raw
   ]
 

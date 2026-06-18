@@ -1,6 +1,6 @@
 defmodule ExLine.Webhook.Message do
   @moduledoc """
-  Parses the message content of an `ExLine.Webhook.MessageEvent`.
+  Parses the message content of an `ExLine.Webhook.Event.Message`.
 
   Each content type is its own struct (`ExLine.Webhook.Message.Text`, `.Image`,
   `.Video`, `.Audio`, `.File`, `.Location`, `.Sticker`); an unrecognized content type

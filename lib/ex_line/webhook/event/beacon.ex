@@ -1,5 +1,5 @@
-defmodule ExLine.Webhook.VideoPlayCompleteEvent do
-  @moduledoc "A user finished playing a video message (with a tracking id)."
+defmodule ExLine.Webhook.Event.Beacon do
+  @moduledoc "A user entered the range of a LINE Beacon."
   defstruct [
     :type,
     :mode,
@@ -8,7 +8,7 @@ defmodule ExLine.Webhook.VideoPlayCompleteEvent do
     :webhook_event_id,
     :delivery_context,
     :reply_token,
-    :video_play_complete,
+    :beacon,
     :raw
   ]
 

@@ -1,5 +1,5 @@
 defmodule ExLine.Webhook.Message.Text do
-  @moduledoc "Text message content (`ExLine.Webhook.MessageEvent`)."
+  @moduledoc "Text message content (`ExLine.Webhook.Event.Message`)."
   defstruct [
     :id,
     :text,

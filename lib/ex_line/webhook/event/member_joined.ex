@@ -1,5 +1,5 @@
-defmodule ExLine.Webhook.AccountLinkEvent do
-  @moduledoc "Result of an account link (link token flow)."
+defmodule ExLine.Webhook.Event.MemberJoined do
+  @moduledoc "A user joined a group/room the bot is in. `joined` is `%{members: [Source]}`."
   defstruct [
     :type,
     :mode,
@@ -8,7 +8,7 @@ defmodule ExLine.Webhook.AccountLinkEvent do
     :webhook_event_id,
     :delivery_context,
     :reply_token,
-    :link,
+    :joined,
     :raw
   ]
 

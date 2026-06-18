@@ -1,5 +1,5 @@
-defmodule ExLine.Webhook.ActivatedEvent do
-  @moduledoc "A module channel was activated (gained chat control)."
+defmodule ExLine.Webhook.Event.Membership do
+  @moduledoc "A change to a user's paid membership for the account."
   defstruct [
     :type,
     :mode,
@@ -7,7 +7,8 @@ defmodule ExLine.Webhook.ActivatedEvent do
     :source,
     :webhook_event_id,
     :delivery_context,
-    :chat_control,
+    :reply_token,
+    :membership,
     :raw
   ]
 

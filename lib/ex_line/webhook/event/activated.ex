@@ -1,5 +1,5 @@
-defmodule ExLine.Webhook.ModuleEvent do
-  @moduledoc "A module channel event (attach/detach, etc.)."
+defmodule ExLine.Webhook.Event.Activated do
+  @moduledoc "A module channel was activated (gained chat control)."
   defstruct [
     :type,
     :mode,
@@ -7,7 +7,7 @@ defmodule ExLine.Webhook.ModuleEvent do
     :source,
     :webhook_event_id,
     :delivery_context,
-    :module,
+    :chat_control,
     :raw
   ]
 

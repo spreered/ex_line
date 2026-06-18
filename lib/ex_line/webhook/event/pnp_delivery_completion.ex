@@ -1,5 +1,5 @@
-defmodule ExLine.Webhook.FollowEvent do
-  @moduledoc "A user added the bot as a friend (or unblocked it)."
+defmodule ExLine.Webhook.Event.PnpDeliveryCompletion do
+  @moduledoc "Delivery completion for a LINE notification message (PNP)."
   defstruct [
     :type,
     :mode,
@@ -7,8 +7,7 @@ defmodule ExLine.Webhook.FollowEvent do
     :source,
     :webhook_event_id,
     :delivery_context,
-    :reply_token,
-    :follow,
+    :delivery,
     :raw
   ]
 

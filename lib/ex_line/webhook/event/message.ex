@@ -1,4 +1,4 @@
-defmodule ExLine.Webhook.MessageEvent do
+defmodule ExLine.Webhook.Event.Message do
   @moduledoc "A user sent a message. `message` is an `ExLine.Webhook.Message` struct."
   defstruct [
     :type,

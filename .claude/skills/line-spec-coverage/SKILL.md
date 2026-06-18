@@ -94,7 +94,7 @@ mapping for ExLine — keep in sync with `notes/plan_message_api.md`):
 | coupon | `ExLine.Coupon` |
 | aggregation unit / insight | `ExLine.Insight` |
 | message/template/action/flex builders | `ExLine.Message.*` |
-| webhook event types (webhook.yml) | `ExLine.Webhook.*Event` (parsed by `ExLine.Webhook.parse/1`) |
+| webhook event types (webhook.yml) | `ExLine.Webhook.Event.*` (parsed by `ExLine.Webhook.parse/1`) |
 | webhook message content (webhook.yml) | `ExLine.Webhook.Message.*` |
 
 Output: per-area counts (implemented / total), the list of missing items, and which

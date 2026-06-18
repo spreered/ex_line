@@ -4,8 +4,7 @@ defmodule ExLine.WebhookTest do
   import ExLine.Conformance
 
   alias ExLine.Webhook
-  alias ExLine.Webhook.{FollowEvent, MessageEvent, PostbackEvent, Source, UnknownEvent}
-  alias ExLine.Webhook.Message
+  alias ExLine.Webhook.{Event, Message, Source}
 
   # A realistic webhook payload (shape from a real LINE delivery).
   @callback_request %{
@@ -32,7 +31,7 @@ defmodule ExLine.WebhookTest do
   describe "parse/1" do
     test "parses a message event with source and content" do
       assert [event] = Webhook.parse(@callback_request)
-      assert %MessageEvent{} = event
+      assert %Event.Message{} = event
       assert event.reply_token == "c9af99042d37482eba79ad00aac170ad"
       assert event.webhook_event_id == "01JDRZ74J283628H97Z0B9B02Z"
       assert %Source{type: "user", user_id: "Ub1aa80a72fcb226a35acbef3188dff89"} = event.source
@@ -53,12 +52,12 @@ defmodule ExLine.WebhookTest do
         "postback" => %{"data" => "a=1", "params" => %{"date" => "2026-01-01"}}
       }
 
-      assert %PostbackEvent{postback: %{data: "a=1", params: %{"date" => "2026-01-01"}}} =
+      assert %Event.Postback{postback: %{data: "a=1", params: %{"date" => "2026-01-01"}}} =
                Webhook.parse_event(raw)
     end
 
     test "parses follow event" do
-      assert %FollowEvent{reply_token: "r"} =
+      assert %Event.Follow{reply_token: "r"} =
                Webhook.parse_event(%{"type" => "follow", "replyToken" => "r"})
     end
 
@@ -74,19 +73,19 @@ defmodule ExLine.WebhookTest do
   describe "parse/1 is total (forward compatibility)" do
     test "unknown event type → UnknownEvent (keeps envelope + raw)" do
       raw = %{"type" => "things", "things" => %{"x" => 1}, "mode" => "active"}
-      assert %UnknownEvent{type: "things", mode: "active", raw: ^raw} = Webhook.parse_event(raw)
+      assert %Event.Unknown{type: "things", mode: "active", raw: ^raw} = Webhook.parse_event(raw)
     end
 
     test "unknown message content type → Message.Unknown" do
       raw = %{"type" => "message", "message" => %{"type" => "flexish", "id" => "1"}}
 
-      assert %MessageEvent{message: %Message.Unknown{type: "flexish", id: "1"}} =
+      assert %Event.Message{message: %Message.Unknown{type: "flexish", id: "1"}} =
                Webhook.parse_event(raw)
     end
 
     test "malformed event does not raise" do
-      assert %UnknownEvent{type: nil} = Webhook.parse_event(%{"no" => "type"})
-      assert %UnknownEvent{type: nil} = Webhook.parse_event("not a map")
+      assert %Event.Unknown{type: nil} = Webhook.parse_event(%{"no" => "type"})
+      assert %Event.Unknown{type: nil} = Webhook.parse_event("not a map")
     end
 
     test "one bad event does not fail the batch" do
@@ -98,7 +97,7 @@ defmodule ExLine.WebhookTest do
         ]
       }
 
-      assert [%FollowEvent{}, %UnknownEvent{}, %MessageEvent{}] = Webhook.parse(body)
+      assert [%Event.Follow{}, %Event.Unknown{}, %Event.Message{}] = Webhook.parse(body)
     end
 
     test "non-webhook input returns []" do
@@ -108,21 +107,19 @@ defmodule ExLine.WebhookTest do
 
   describe "parse/1 additional event types" do
     @additional_events [
-      {%{"type" => "unsend", "unsend" => %{"messageId" => "m"}}, Webhook.UnsendEvent},
+      {%{"type" => "unsend", "unsend" => %{"messageId" => "m"}}, Event.Unsend},
       {%{"type" => "videoPlayComplete", "videoPlayComplete" => %{"trackingId" => "t"}},
-       Webhook.VideoPlayCompleteEvent},
-      {%{"type" => "beacon", "beacon" => %{"hwid" => "h"}}, Webhook.BeaconEvent},
+       Event.VideoPlayComplete},
+      {%{"type" => "beacon", "beacon" => %{"hwid" => "h"}}, Event.Beacon},
       {%{"type" => "accountLink", "link" => %{"result" => "ok", "nonce" => "n"}},
-       Webhook.AccountLinkEvent},
-      {%{"type" => "membership", "membership" => %{"membershipId" => 1}},
-       Webhook.MembershipEvent},
-      {%{"type" => "activated", "chatControl" => %{"expireAt" => 1}}, Webhook.ActivatedEvent},
-      {%{"type" => "deactivated"}, Webhook.DeactivatedEvent},
-      {%{"type" => "botSuspended"}, Webhook.BotSuspendedEvent},
-      {%{"type" => "botResumed"}, Webhook.BotResumedEvent},
-      {%{"type" => "module", "module" => %{"type" => "attached"}}, Webhook.ModuleEvent},
-      {%{"type" => "delivery", "delivery" => %{"data" => "d"}},
-       Webhook.PnpDeliveryCompletionEvent}
+       Event.AccountLink},
+      {%{"type" => "membership", "membership" => %{"membershipId" => 1}}, Event.Membership},
+      {%{"type" => "activated", "chatControl" => %{"expireAt" => 1}}, Event.Activated},
+      {%{"type" => "deactivated"}, Event.Deactivated},
+      {%{"type" => "botSuspended"}, Event.BotSuspended},
+      {%{"type" => "botResumed"}, Event.BotResumed},
+      {%{"type" => "module", "module" => %{"type" => "attached"}}, Event.Module},
+      {%{"type" => "delivery", "delivery" => %{"data" => "d"}}, Event.PnpDeliveryCompletion}
     ]
 
     test "each additional event type parses to its own struct, keeping raw" do
@@ -134,10 +131,10 @@ defmodule ExLine.WebhookTest do
     end
 
     test "payload fields are mapped" do
-      assert %Webhook.UnsendEvent{unsend: %{"messageId" => "m"}} =
+      assert %Event.Unsend{unsend: %{"messageId" => "m"}} =
                Webhook.parse_event(%{"type" => "unsend", "unsend" => %{"messageId" => "m"}})
 
-      assert %Webhook.BeaconEvent{beacon: %{"hwid" => "h"}} =
+      assert %Event.Beacon{beacon: %{"hwid" => "h"}} =
                Webhook.parse_event(%{"type" => "beacon", "beacon" => %{"hwid" => "h"}})
     end
   end

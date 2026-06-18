@@ -84,7 +84,7 @@
 - [x] vendor `webhook.yml`（釘 commit `779d8ca9e632`）；conformance helper 改吃兩份 spec，依 schema 名挑；fixture 驗 `CallbackRequest`
 - [x] `ExLine.Webhook.parse/1`：**total，永不 raise**——未知 type → fallback、未知欄位 → 忽略、單顆壞 → 退 `UnknownEvent`（`parse_event` 以 rescue 保底）
 - [x] event struct：高頻事件正式 struct（MessageEvent/PostbackEvent/Follow/Unfollow/Join/Leave/MemberJoined/MemberLeft）+ `Source`（user/group/room）+ message content struct（text/image/video/audio/file/location/sticker）
-- [x] fallback：未知事件 → `%ExLine.Webhook.UnknownEvent{type, raw}`；未知 message content → `ExLine.Webhook.Message.Unknown`
+- [x] fallback：未知事件 → `%ExLine.Webhook.Event.Unknown{type, raw}`；未知 message content → `ExLine.Webhook.Message.Unknown`
 - [x] **每個 event/message struct 都帶 `raw:` 原始 map**
 - [x] `ExLine.EventRouter` 改寫成 match struct + matcher 擴充：`text "..."`、`message :kind`、`postback`、`follow`/`unfollow`/`join`/`leave`/`member_joined`/`member_left`、強制 `default`
 - [x] 其餘事件型別（unsend/videoPlayComplete/beacon/accountLink/membership/activated/deactivated/botSuspended/botResumed/module/delivery(PNP)）也補成正式 struct + parse + router matcher

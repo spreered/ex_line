@@ -1,5 +1,5 @@
-defmodule ExLine.Webhook.UnsendEvent do
-  @moduledoc "A user unsent (withdrew) a message."
+defmodule ExLine.Webhook.Event.AccountLink do
+  @moduledoc "Result of an account link (link token flow)."
   defstruct [
     :type,
     :mode,
@@ -7,7 +7,8 @@ defmodule ExLine.Webhook.UnsendEvent do
     :source,
     :webhook_event_id,
     :delivery_context,
-    :unsend,
+    :reply_token,
+    :link,
     :raw
   ]
 

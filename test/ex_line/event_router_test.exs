@@ -2,6 +2,7 @@ defmodule ExLine.EventRouterTest do
   use ExUnit.Case, async: true
 
   alias ExLine.Webhook
+  alias ExLine.Webhook.Event
 
   # Handlers record the dispatch into the test process for assertion.
   defmodule EchoHandler do
@@ -38,7 +39,7 @@ defmodule ExLine.EventRouterTest do
 
   test "routes a text message to its handler/action" do
     route(text_event("hello"))
-    assert_received {:handled, :hello, %Webhook.MessageEvent{}, %{seen: true}}
+    assert_received {:handled, :hello, %Event.Message{}, %{seen: true}}
   end
 
   test "assigns pattern selects a more specific route" do
@@ -49,36 +50,35 @@ defmodule ExLine.EventRouterTest do
   test "routes any image message by content kind" do
     route(%{"type" => "message", "message" => %{"type" => "image", "id" => "1"}})
 
-    assert_received {:handled, :on_image,
-                     %Webhook.MessageEvent{message: %Webhook.Message.Image{}}, _}
+    assert_received {:handled, :on_image, %Event.Message{message: %Webhook.Message.Image{}}, _}
   end
 
   test "routes postback by data" do
     route(%{"type" => "postback", "postback" => %{"data" => "buy"}})
-    assert_received {:handled, :buy, %Webhook.PostbackEvent{}, _assigns}
+    assert_received {:handled, :buy, %Event.Postback{}, _assigns}
   end
 
   test "routes follow events" do
     route(%{"type" => "follow"})
-    assert_received {:handled, :welcome, %Webhook.FollowEvent{}, _assigns}
+    assert_received {:handled, :welcome, %Event.Follow{}, _assigns}
   end
 
   test "routes member-joined events" do
     route(%{"type" => "memberJoined", "joined" => %{"members" => []}})
-    assert_received {:handled, :greet, %Webhook.MemberJoinedEvent{}, _assigns}
+    assert_received {:handled, :greet, %Event.MemberJoined{}, _assigns}
   end
 
   test "routes additional event types by name (unsend, beacon)" do
     route(%{"type" => "unsend", "unsend" => %{"messageId" => "m"}})
-    assert_received {:handled, :unsent, %Webhook.UnsendEvent{}, _}
+    assert_received {:handled, :unsent, %Event.Unsend{}, _}
 
     route(%{"type" => "beacon", "beacon" => %{"hwid" => "x"}})
-    assert_received {:handled, :on_beacon, %Webhook.BeaconEvent{}, _}
+    assert_received {:handled, :on_beacon, %Event.Beacon{}, _}
   end
 
   test "a still-unmodelled event type falls through to default as UnknownEvent" do
     route(%{"type" => "things", "things" => %{}})
-    assert_received {:handled, :fallback, %Webhook.UnknownEvent{type: "things"}, _assigns}
+    assert_received {:handled, :fallback, %Event.Unknown{type: "things"}, _assigns}
   end
 
   test "a text other than the matched literal falls through to default" do

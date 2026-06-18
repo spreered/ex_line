@@ -1,5 +1,5 @@
-defmodule ExLine.Webhook.PnpDeliveryCompletionEvent do
-  @moduledoc "Delivery completion for a LINE notification message (PNP)."
+defmodule ExLine.Webhook.Event.Unsend do
+  @moduledoc "A user unsent (withdrew) a message."
   defstruct [
     :type,
     :mode,
@@ -7,7 +7,7 @@ defmodule ExLine.Webhook.PnpDeliveryCompletionEvent do
     :source,
     :webhook_event_id,
     :delivery_context,
-    :delivery,
+    :unsend,
     :raw
   ]
 

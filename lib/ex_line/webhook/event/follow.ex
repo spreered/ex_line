@@ -1,5 +1,5 @@
-defmodule ExLine.Webhook.JoinEvent do
-  @moduledoc "The bot joined a group or room."
+defmodule ExLine.Webhook.Event.Follow do
+  @moduledoc "A user added the bot as a friend (or unblocked it)."
   defstruct [
     :type,
     :mode,
@@ -8,6 +8,7 @@ defmodule ExLine.Webhook.JoinEvent do
     :webhook_event_id,
     :delivery_context,
     :reply_token,
+    :follow,
     :raw
   ]
 

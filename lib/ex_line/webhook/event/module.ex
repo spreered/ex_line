@@ -1,5 +1,5 @@
-defmodule ExLine.Webhook.MembershipEvent do
-  @moduledoc "A change to a user's paid membership for the account."
+defmodule ExLine.Webhook.Event.Module do
+  @moduledoc "A module channel event (attach/detach, etc.)."
   defstruct [
     :type,
     :mode,
@@ -7,8 +7,7 @@ defmodule ExLine.Webhook.MembershipEvent do
     :source,
     :webhook_event_id,
     :delivery_context,
-    :reply_token,
-    :membership,
+    :module,
     :raw
   ]
 
