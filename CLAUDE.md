@@ -8,7 +8,7 @@ top-level module `ExLine`.
 - **Standalone hex.** This is NOT integrated into hawk and does NOT involve any
   hawk refactoring. hawk's `lib/line/*` is reference material only.
 - **Scope order:** finish the **Messaging API** first, then add **LIFF**.
-- **Naming:** package `ex_line`, base module `ExLine` (e.g. `ExLine.Messaging`,
+- **Naming:** package `ex_line`, base module `ExLine` (e.g. `ExLine.Api.Messaging`,
   `ExLine.Webhook`, `ExLine.Liff`).
 - Planning lives in `notes/`: see [milestone.md](notes/milestone.md),
   [plan_message_api.md](notes/plan_message_api.md),

@@ -7,7 +7,7 @@ defmodule ExLine.Client do
   for each request:
 
       client = ExLine.Client.new(access_token: provider.message_channel_access_token)
-      ExLine.Messaging.push(client, user_id, message)
+      ExLine.Api.Messaging.push(client, user_id, message)
 
   For the single-channel case, `from_env/1` reads a default from application config.
 

@@ -4,13 +4,14 @@ defmodule ExLine.ApiTest do
 
   import Mox
 
-  alias ExLine.{Bot, Client, Content, Profile}
+  alias ExLine.Api.{Bot, Content, Profile}
+  alias ExLine.Client
 
   setup :verify_on_exit!
 
   defp client, do: Client.new(access_token: "tok", adapter: ExLine.AdapterMock)
 
-  describe "ExLine.Content" do
+  describe "ExLine.Api.Content" do
     test "get/2 hits the api-data host and returns raw bytes" do
       expect(ExLine.AdapterMock, :request, fn req ->
         assert req.method == :get
@@ -40,7 +41,7 @@ defmodule ExLine.ApiTest do
     end
   end
 
-  describe "ExLine.Profile" do
+  describe "ExLine.Api.Profile" do
     test "get/2 fetches a user profile" do
       expect(ExLine.AdapterMock, :request, fn req ->
         assert req.url == "https://api.line.me/v2/bot/profile/U1"
@@ -62,7 +63,7 @@ defmodule ExLine.ApiTest do
     end
   end
 
-  describe "ExLine.Bot" do
+  describe "ExLine.Api.Bot" do
     test "info/1 fetches bot info" do
       expect(ExLine.AdapterMock, :request, fn req ->
         assert req.url == "https://api.line.me/v2/bot/info"

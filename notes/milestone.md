@@ -23,7 +23,7 @@
 
 - [x] `ExLine.Client`：憑證值 struct（`access_token` / `channel_id` / `base_url` / `data_url` / `retry`）+ `new/1` + `from_env/0`
 - [x] `ExLine.Client.Adapter`：HTTP behaviour（方便 mock）
-- [x] `ExLine.Client.Req`：Req 實作；header 注入、`X-Line-Retry-Key`；push 結果分類（200/409→ok、429→quota_exceeded、transient/permanent）放在 `ExLine.Messaging`/`ExLine.Error`（api↔api-data host 切換已具備，待 M2 Content 實際使用）
+- [x] `ExLine.Client.Req`：Req 實作；header 注入、`X-Line-Retry-Key`；push 結果分類（200/409→ok、429→quota_exceeded、transient/permanent）放在 `ExLine.Api.Messaging`/`ExLine.Error`（api↔api-data host 切換已具備，待 M2 Content 實際使用）
 - [x] `ExLine.Error`：統一錯誤型別（`:transient`/`:quota_exceeded`/`:permanent`/`:network` + `retryable?/1`）
 - [x] `ExLine.Message`（+ `Template` / `Action`）：`text`/`sticker`/`with_quick_reply`/`with_sender` + `Action.message/postback/uri` + `Template.buttons/confirm`（`with_quick_reply`/`with_sender` 以函式收進 `ExLine.Message`，未獨立成 QuickReply/Sender 模組）
 - [x] `ExLine.Webhook.Signature`：`valid?(body, signature, secret)`，自前 constant-time 比較（不依賴 plug），`sign/2` helper
@@ -66,16 +66,16 @@
 
 ## M2 — Phase 1：核心 API
 
-- [x] `ExLine.Messaging.reply/4`、`push/4`、`multicast/4`（reply/push 於 M1 完成；multicast 新增，含 retry_key 與 notification_disabled）
+- [x] `ExLine.Api.Messaging.reply/4`、`push/4`、`multicast/4`（reply/push 於 M1 完成；multicast 新增，含 retry_key 與 notification_disabled）
 - [x] 訊息 builder 補齊：`image` / `video` / `audio` / `location` / `imagemap` / `textV2`（mention/substitution）（`text`/`sticker` 已完成）
 - [x] **coupon message type**（`ExLine.Message.coupon/2`，含 `delivery_tag`）→ 訊息物件達 11/11
 - [x] text 強化：`emojis`、`quoteToken`（引用回覆）支援
 - [x] template 補齊：`carousel` / `image_carousel`（`buttons`/`confirm` 已完成）
 - [x] action builder 補齊：`datetimepicker` / `camera` / `camera_roll` / `location` / `richmenu_switch` / `clipboard`（`message`/`postback`/`uri` 已完成）
 - [x] `ExLine.Message.Flex`：正式 Flex DSL（bubble/carousel/box/text/image/button/separator）
-- [x] `ExLine.Content`：下載媒體 / preview / transcoding status（走 api-data host）
-- [x] `ExLine.Profile`：`get/2`（Messaging API getProfile，非 LIFF）+ `followers/2`
-- [x] `ExLine.Bot`：`info/1`
+- [x] `ExLine.Api.Content`：下載媒體 / preview / transcoding status（走 api-data host）
+- [x] `ExLine.Api.Profile`：`get/2`（Messaging API getProfile，非 LIFF）+ `followers/2`
+- [x] `ExLine.Api.Bot`：`info/1`
 - [x] quota / count / loading：`quota` / `quota_consumption` + `sent_count/3` + `display_loading_animation`
 ### webhook event 解析（已定設計：強化版 Plan A，forward-compatible）
 
@@ -99,10 +99,10 @@
 > 建議優先序（價值×成本）：**broadcast/narrowcast（快又有價值）→ Rich menu（最有價值但最大塊）** → Group/Room、webhook 設定（小品穿插）→ validate*（本地 conformance 已驗格式，往後排）。
 
 - [ ] `broadcast` / `narrowcast` + narrowcast progress（複用 push 的 `handle_send`）
-- [ ] `ExLine.RichMenu`：CRUD / per-user / alias / bulk（含 api-data 圖片上傳）
-- [ ] `ExLine.Group`：group / room summary / members / leave
-- [ ] **webhook endpoint 設定**：get / set / test（`ExLine.Webhook`）← 原本漏列
-- [ ] **markMessagesAsRead / markMessagesAsReadByToken / pushMessagesByPhone**（`ExLine.Messaging`）← 原本漏列
+- [ ] `ExLine.Api.RichMenu`：CRUD / per-user / alias / bulk（含 api-data 圖片上傳）
+- [ ] `ExLine.Api.Group`：group / room summary / members / leave
+- [ ] **webhook endpoint 設定**：get / set / test（`ExLine.Api.Webhook`，與解析用的 `ExLine.Webhook` 區分）← 原本漏列
+- [ ] **markMessagesAsRead / markMessagesAsReadByToken / pushMessagesByPhone**（`ExLine.Api.Messaging`）← 原本漏列
 - [ ] `validate_*`（reply/push/multicast/narrowcast/broadcast 送出前驗證）— 優先序低（本地 conformance 已驗格式）
 - [x] `*_count`（reply/push/multicast/broadcast）— 已於 M2 用 `sent_count/3` 完成
 - [ ] Token provider（選配）：`ExLine.Auth.V2_1`（JWT 換發/key id/撤銷）、`ExLine.Auth.Stateless`；`ExLine.Client` 支援動態取 token（需 vendor `channel-access-token.yml`；可能需 supervision tree → 屆時補 `--sup`/`application`）
@@ -110,11 +110,11 @@
 
 ## M4 — Phase 3：少用
 
-- [ ] `ExLine.Audience`（受眾管理）— 端點在 **`manage-audience.yml`**（需另 vendor），不在 messaging-api.yml
-- [ ] `ExLine.Insight`（統計）：`getPNPMessageStatistics` / aggregation unit（name list / usage）等
-- [ ] `ExLine.Membership`：getJoinedMembershipUsers / getMembershipList / getMembershipSubscription
-- [ ] `ExLine.Coupon`（coupon **管理 API**：create/close/list/detail，≠ coupon message type）
-- [ ] `ExLine.AccountLink`（issueLinkToken）
+- [ ] `ExLine.Api.Audience`（受眾管理）— 端點在 **`manage-audience.yml`**（需另 vendor），不在 messaging-api.yml
+- [ ] `ExLine.Api.Insight`（統計）：`getPNPMessageStatistics` / aggregation unit（name list / usage）等
+- [ ] `ExLine.Api.Membership`：getJoinedMembershipUsers / getMembershipList / getMembershipSubscription
+- [ ] `ExLine.Api.Coupon`（coupon **管理 API**：create/close/list/detail，≠ coupon message type）
+- [ ] `ExLine.Api.AccountLink`（issueLinkToken）
 - [x] webhook event 全型別補完（含 beacon/membership/unsend/…，已於 M2 完成）
 
 ### ✅ Messaging API 告一段落檢查點
@@ -137,7 +137,7 @@
 - [ ] `ExLine.Login.verify_access_token/1`：GET `/oauth2/v2.1/verify`，回 `scope`/`client_id`/`expires_in` + `valid?` helper
 - [ ] `ExLine.Login.get_profile/1`：GET `/v2/profile`（Bearer 使用者 access token）
 - [ ] `ExLine.Login.get_friendship/1`：GET `/friendship/v1/status`（Bearer，查官方帳號好友狀態）
-- [ ] **驗收**：給定 id_token + channel_id 能驗證取得 claims；`sub` 可直接餵 `ExLine.Messaging.push`
+- [ ] **驗收**：給定 id_token + channel_id 能驗證取得 claims；`sub` 可直接餵 `ExLine.Api.Messaging.push`
 
 ## M6 — Phase B：LiveView LIFF 編排（招牌功能）
 

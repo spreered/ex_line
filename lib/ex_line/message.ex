@@ -3,7 +3,7 @@ defmodule ExLine.Message do
   Builders for LINE message objects.
 
   Functions return plain maps conforming to the LINE Messaging API message object
-  spec, ready to pass to `ExLine.Messaging.reply/4` / `push/4`. Template, action,
+  spec, ready to pass to `ExLine.Api.Messaging.reply/4` / `push/4`. Template, action,
   flex and imagemap sub-objects live in `ExLine.Message.Template`,
   `ExLine.Message.Action`, `ExLine.Message.Flex` and `ExLine.Message.Imagemap`.
 

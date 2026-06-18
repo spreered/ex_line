@@ -80,19 +80,19 @@ mapping for ExLine — keep in sync with `notes/plan_message_api.md`):
 
 | spec area | namespace |
 | --- | --- |
-| reply/push/multicast/broadcast/narrowcast/markAsRead/loadingAnimation | `ExLine.Messaging` |
-| validate* (messages) | `ExLine.Messaging` (validate_*) |
-| quota / sent-count / narrowcast-progress / PNP stats | `ExLine.Messaging` |
-| message content (download/preview/transcoding) | `ExLine.Content` (api-data host) |
-| getProfile / getFollowers | `ExLine.Profile` |
-| getBotInfo | `ExLine.Bot` |
-| group/room | `ExLine.Group` |
-| rich menu (all) | `ExLine.RichMenu` |
-| webhook endpoint settings | `ExLine.Webhook` |
-| issueLinkToken | `ExLine.AccountLink` |
-| membership | `ExLine.Membership` |
-| coupon | `ExLine.Coupon` |
-| aggregation unit / insight | `ExLine.Insight` |
+| reply/push/multicast/broadcast/narrowcast/markAsRead/loadingAnimation | `ExLine.Api.Messaging` |
+| validate* (messages) | `ExLine.Api.Messaging` (validate_*) |
+| quota / sent-count / narrowcast-progress / PNP stats | `ExLine.Api.Messaging` |
+| message content (download/preview/transcoding) | `ExLine.Api.Content` (api-data host) |
+| getProfile / getFollowers | `ExLine.Api.Profile` |
+| getBotInfo | `ExLine.Api.Bot` |
+| group/room | `ExLine.Api.Group` |
+| rich menu (all) | `ExLine.Api.RichMenu` |
+| webhook endpoint settings (get/set/test) | `ExLine.Api.Webhook` (distinct from `ExLine.Webhook`, which parses incoming events) |
+| issueLinkToken | `ExLine.Api.AccountLink` |
+| membership | `ExLine.Api.Membership` |
+| coupon | `ExLine.Api.Coupon` |
+| aggregation unit / insight | `ExLine.Api.Insight` |
 | message/template/action/flex builders | `ExLine.Message.*` |
 | webhook event types (webhook.yml) | `ExLine.Webhook.Event.*` (parsed by `ExLine.Webhook.parse/1`) |
 | webhook message content (webhook.yml) | `ExLine.Webhook.Message.*` |
@@ -102,8 +102,8 @@ milestone (`notes/milestone.md`) they belong to. Flag any spec item that has no
 namespace mapping yet (it may be a newly added API area).
 
 **4. Other line-openapi specs** not yet vendored, and their target namespace:
-`channel-access-token.yml` → `ExLine.Auth.*` (M3); `insight.yml` → `ExLine.Insight`,
-`manage-audience.yml` → `ExLine.Audience` (M4); `liff.yml` → `ExLine.Liff.Apps`
+`channel-access-token.yml` → `ExLine.Auth.*` (M3); `insight.yml` → `ExLine.Api.Insight`,
+`manage-audience.yml` → `ExLine.Api.Audience` (M4); `liff.yml` → `ExLine.Liff.Apps`
 (Plan 2). Note if any are now relevant to current work.
 (`messaging-api.yml` and `webhook.yml` are already vendored.)
 

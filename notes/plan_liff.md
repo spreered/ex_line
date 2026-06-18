@@ -84,10 +84,10 @@ ExLine.Liff
 |---|---|
 | `ExLine.Login.verify_id_token/2` | POST `/oauth2/v2.1/verify`，**補 `nonce` / `user_id` 選填參數**，回結構化 claims（`sub`/`name`/`picture`/`email`…）。預設走 verify endpoint；可選 local ES256+JWKS 驗簽為進階模式 |
 | `ExLine.Login.verify_access_token/1` | GET `/oauth2/v2.1/verify`，回 `scope`/`client_id`/`expires_in` + `valid?` helper |
-| `ExLine.Login.get_profile/1` | GET `/v2/profile`（Bearer 使用者 access token），回 `userId`/`displayName`/`pictureUrl`/`statusMessage`。**注意與 Messaging `ExLine.Profile.get_profile` 是不同 endpoint** |
+| `ExLine.Login.get_profile/1` | GET `/v2/profile`（Bearer 使用者 access token），回 `userId`/`displayName`/`pictureUrl`/`statusMessage`。**注意與 Messaging `ExLine.Api.Profile.get_profile` 是不同 endpoint** |
 | `ExLine.Login.get_friendship/1` | GET `/friendship/v1/status`（Bearer），回是否已加官方帳號好友 |
 
-**驗收**：給定 id_token + channel_id 能驗證並取得 claims；`sub` 可直接餵 Plan 1 的 `ExLine.Messaging.push`（`sub` = Messaging userId）。
+**驗收**：給定 id_token + channel_id 能驗證並取得 claims；`sub` 可直接餵 Plan 1 的 `ExLine.Api.Messaging.push`（`sub` = Messaging userId）。
 
 ---
 
@@ -133,7 +133,7 @@ ExLine.Liff
 
 - **複用**：`ExLine.Client` 的 HTTP adapter / `ExLine.Error` / retry 設定。
 - **不混用憑證**：`ExLine.Login`（login channel）與 `ExLine.Client`（messaging channel）是兩個值，分開傳。
-- **接點**：`verify_id_token` 的 `sub` = `ExLine.Profile` / Messaging 的 `userId`，文件明確標註，讓「LIFF 登入 → 直接推播」順暢。
+- **接點**：`verify_id_token` 的 `sub` = `ExLine.Api.Profile` / Messaging 的 `userId`，文件明確標註，讓「LIFF 登入 → 直接推播」順暢。
 
 ---
 

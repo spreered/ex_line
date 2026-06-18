@@ -4,7 +4,8 @@ defmodule ExLine.MessagingTest do
   import Mox
   import ExLine.Conformance
 
-  alias ExLine.{Client, Error, Message, Messaging}
+  alias ExLine.{Client, Error, Message}
+  alias ExLine.Api.Messaging
 
   setup :verify_on_exit!
 

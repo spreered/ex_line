@@ -1,4 +1,4 @@
-defmodule ExLine.Content do
+defmodule ExLine.Api.Content do
   @moduledoc """
   Download media that users sent (image/video/audio/file) and check its status.
 

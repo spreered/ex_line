@@ -1,4 +1,4 @@
-defmodule ExLine.Messaging do
+defmodule ExLine.Api.Messaging do
   @moduledoc """
   LINE Messaging API send endpoints.
 

@@ -7,7 +7,7 @@ defmodule ExLine.EventHandler do
   available), enforces the `handle_event/3` callback, and defines the `call/3`
   wrapper the router calls.
 
-  Message sending takes a client, so call `ExLine.Messaging` explicitly with the
+  Message sending takes a client, so call `ExLine.Api.Messaging` explicitly with the
   client you placed in `event_assigns`:
 
       defmodule MyApp.HelpHandler do
@@ -15,7 +15,7 @@ defmodule ExLine.EventHandler do
 
         @impl true
         def handle_event(:show_help, %{"replyToken" => token}, %{client: client}) do
-          ExLine.Messaging.reply(client, token, text("Need help?"))
+          ExLine.Api.Messaging.reply(client, token, text("Need help?"))
           :ok
         end
       end

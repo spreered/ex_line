@@ -1,4 +1,4 @@
-defmodule ExLine.Profile do
+defmodule ExLine.Api.Profile do
   @moduledoc """
   Fetch user profiles and follower IDs via the Messaging API.
 

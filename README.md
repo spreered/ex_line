@@ -45,7 +45,7 @@ client from wherever you store the token (DB row, etc.) and pass it in:
 
 ```elixir
 client = ExLine.Client.new(access_token: channel.access_token)
-ExLine.Messaging.push(client, user_id, message)
+ExLine.Api.Messaging.push(client, user_id, message)
 ```
 
 **2. From application config (single-channel convenience).**
@@ -80,10 +80,10 @@ plug ExLine.Webhook.Plug, secret: fn conn -> MyApp.secret_for(conn) end
 client = ExLine.Client.new(access_token: "CHANNEL_ACCESS_TOKEN")
 
 # push
-ExLine.Messaging.push(client, "U123...", ExLine.Message.text("hello"))
+ExLine.Api.Messaging.push(client, "U123...", ExLine.Message.text("hello"))
 
 # reply (using a webhook replyToken)
-ExLine.Messaging.reply(client, reply_token, [
+ExLine.Api.Messaging.reply(client, reply_token, [
   ExLine.Message.text("hi"),
   ExLine.Message.Template.buttons("Pick one", [
     ExLine.Message.Action.message("A", "a"),
@@ -95,7 +95,7 @@ ExLine.Messaging.reply(client, reply_token, [
 Push supports idempotent retries via `X-Line-Retry-Key`:
 
 ```elixir
-ExLine.Messaging.push(client, "U123...", msg, retry_key: "a-uuid")
+ExLine.Api.Messaging.push(client, "U123...", msg, retry_key: "a-uuid")
 ```
 
 Errors come back as `{:error, %ExLine.Error{kind: kind}}` where `kind` is one of
@@ -143,7 +143,7 @@ defmodule MyApp.HelpHandler do
 
   @impl true
   def handle_event(:hello, %{"replyToken" => token}, %{client: client}) do
-    ExLine.Messaging.reply(client, token, text("Need help?"))
+    ExLine.Api.Messaging.reply(client, token, text("Need help?"))
     :ok
   end
 end
@@ -168,7 +168,7 @@ Mox.expect(MyApp.LineAdapterMock, :request, fn req ->
   {:ok, %{status: 200, body: %{}}}
 end)
 
-ExLine.Messaging.push(client, "U1", ExLine.Message.text("hi"))
+ExLine.Api.Messaging.push(client, "U1", ExLine.Message.text("hi"))
 ```
 
 ## Status

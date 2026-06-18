@@ -15,9 +15,9 @@ defmodule ExLine do
   ## Quick start
 
       client = ExLine.Client.new(access_token: "CHANNEL_ACCESS_TOKEN")
-      ExLine.Messaging.push(client, "U123...", ExLine.Message.text("hello"))
+      ExLine.Api.Messaging.push(client, "U123...", ExLine.Message.text("hello"))
 
-  See `ExLine.Messaging`, `ExLine.Message`, `ExLine.Webhook.Signature`, and
+  See `ExLine.Api.Messaging`, `ExLine.Message`, `ExLine.Webhook.Signature`, and
   `ExLine.EventRouter`.
   """
 end

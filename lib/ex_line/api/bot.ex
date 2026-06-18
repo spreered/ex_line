@@ -1,4 +1,4 @@
-defmodule ExLine.Bot do
+defmodule ExLine.Api.Bot do
   @moduledoc """
   Information about the bot / LINE Official Account.
 
