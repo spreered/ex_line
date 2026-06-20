@@ -119,8 +119,9 @@ defmodule ExLine.MessagingTest do
     end
 
     test "requires a list of recipients" do
+      # apply/3 defeats the compile-time type check so we can assert the runtime guard.
       assert_raise FunctionClauseError, fn ->
-        Messaging.multicast(client(), "U1", Message.text("hi"))
+        apply(Messaging, :multicast, [client(), "U1", Message.text("hi")])
       end
     end
   end
@@ -167,12 +168,71 @@ defmodule ExLine.MessagingTest do
     end
   end
 
+  describe "broadcast / narrowcast" do
+    test "broadcast/3 posts to the broadcast endpoint without a recipient" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.url == "https://api.line.me/v2/bot/message/broadcast"
+        assert req.body == %{messages: [%{type: "text", text: "hi"}]}
+        {:ok, %{status: 200, body: %{}}}
+      end)
+
+      assert {:ok, %{}} = Messaging.broadcast(client(), Message.text("hi"))
+    end
+
+    test "narrowcast/3 returns the request id from the X-Line-Request-Id header (202)" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.url == "https://api.line.me/v2/bot/message/narrowcast"
+        {:ok, %{status: 202, body: %{}, headers: %{"x-line-request-id" => ["req-123"]}}}
+      end)
+
+      assert {:ok, "req-123"} = Messaging.narrowcast(client(), Message.text("hi"))
+    end
+
+    test "narrowcast/3 includes recipient/filter/limit when given" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.body.recipient == %{type: "audience", audienceGroupId: 1}
+        assert req.body.limit == %{max: 100}
+        {:ok, %{status: 202, body: %{}, headers: %{"x-line-request-id" => ["r"]}}}
+      end)
+
+      Messaging.narrowcast(client(), Message.text("hi"),
+        recipient: %{type: "audience", audienceGroupId: 1},
+        limit: %{max: 100}
+      )
+    end
+
+    test "narrowcast_progress/2 GETs the progress endpoint with requestId" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.method == :get
+        assert req.url == "https://api.line.me/v2/bot/message/progress/narrowcast"
+        assert {:requestId, "req-123"} in req.query
+        {:ok, %{status: 200, body: %{"phase" => "succeeded", "successCount" => 10}}}
+      end)
+
+      assert {:ok, %{"phase" => "succeeded"}} = Messaging.narrowcast_progress(client(), "req-123")
+    end
+  end
+
   # Conformance of the request envelopes against LINE's official OpenAPI spec.
   describe "conformance" do
     @describetag :conformance
 
     test "reply request → ReplyMessageRequest" do
       assert_conforms(%{replyToken: "rt", messages: [Message.text("hi")]}, "ReplyMessageRequest")
+    end
+
+    test "broadcast request → BroadcastRequest" do
+      assert_conforms(%{messages: [Message.text("hi")]}, "BroadcastRequest")
+    end
+
+    test "narrowcast request → NarrowcastRequest" do
+      body = %{
+        messages: [Message.text("hi")],
+        recipient: %{type: "audience", audienceGroupId: 1},
+        limit: %{max: 100}
+      }
+
+      assert_conforms(body, "NarrowcastRequest")
     end
 
     test "push request → PushMessageRequest" do
