@@ -59,9 +59,9 @@
 
 > **覆蓋率快照（2026-06）**：
 > - `webhook.yml`：event 19/19、content 7/7、source 3/3 → **100% 解析覆蓋**
-> - `messaging-api.yml`：endpoint 19/73（~26%）；訊息物件 **11/11**、template 4/4、action 9/9、Flex ✅
-> - 已串 endpoint：reply/push/multicast/broadcast/narrowcast(+progress)、content×3、profile/followers、bot info、quota×2、sent_count×4、loading
-> - 未串大塊：rich menu(~23)、group/room、validate*、membership/coupon/insight/audience/accountLink（見 M3/M4）
+> - `messaging-api.yml`：endpoint 42/73（~58%）；訊息物件 **11/11**、template 4/4、action 9/9、Flex ✅
+> - 已串 endpoint：send 類(reply/push/multicast/broadcast/narrowcast+progress)、content×3、profile/followers、bot info、quota×2、sent_count×4、loading、**rich menu 全套(~23)**
+> - 未串大塊：group/room、validate*(訊息)、webhook 設定、markAsRead/pushByPhone、membership/coupon/insight/audience/accountLink（見 M3/M4）
 > **待補的其他 spec**：channel-access-token.yml（M3 token）、insight.yml / manage-audience.yml（M4）、liff.yml（Plan 2）。（messaging-api.yml + webhook.yml 已 vendor）
 
 ## M2 — Phase 1：核心 API
@@ -99,7 +99,7 @@
 > 建議優先序（價值×成本）：**broadcast/narrowcast（快又有價值）→ Rich menu（最有價值但最大塊）** → Group/Room、webhook 設定（小品穿插）→ validate*（本地 conformance 已驗格式，往後排）。
 
 - [x] `broadcast` / `narrowcast` + narrowcast progress（`broadcast/3` 複用 `handle_send`；`narrowcast/3` 回 X-Line-Request-Id、`narrowcast_progress/2` 查狀態；recipient/filter/limit 以 opts 傳入）
-- [ ] `ExLine.Api.RichMenu`：CRUD / per-user / alias / bulk（含 api-data 圖片上傳）
+- [x] `ExLine.Api.RichMenu`：CRUD / validate / 圖片上傳下載(api-data,raw body)/ default / per-user link / bulk / alias / batch(+progress)（含 builders `rich_menu`/`size`/`area`/`bounds`;`ExLine.Client` 擴充 `raw_body`+`content_type` 支援二進位上傳）
 - [ ] `ExLine.Api.Group`：group / room summary / members / leave
 - [ ] **webhook endpoint 設定**：get / set / test（`ExLine.Api.Webhook`，與解析用的 `ExLine.Webhook` 區分）← 原本漏列
 - [ ] **markMessagesAsRead / markMessagesAsReadByToken / pushMessagesByPhone**（`ExLine.Api.Messaging`）← 原本漏列

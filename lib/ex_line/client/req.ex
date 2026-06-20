@@ -8,10 +8,10 @@ defmodule ExLine.Client.Req do
   alias ExLine.Error
 
   @impl true
-  def request(%{method: method, url: url, headers: headers, body: body, query: query}) do
+  def request(%{method: method, url: url, headers: headers, query: query} = req) do
     opts =
       [method: method, url: url, headers: headers, params: query]
-      |> maybe_put_json(body)
+      |> put_body(req)
 
     case Req.request(opts) do
       {:ok, %Req.Response{status: status, body: rbody, headers: rheaders}} ->
@@ -22,6 +22,8 @@ defmodule ExLine.Client.Req do
     end
   end
 
-  defp maybe_put_json(opts, nil), do: opts
-  defp maybe_put_json(opts, body), do: Keyword.put(opts, :json, body)
+  # raw_body (e.g. image bytes) is sent as-is; otherwise body is JSON-encoded.
+  defp put_body(opts, %{raw_body: raw}) when not is_nil(raw), do: Keyword.put(opts, :body, raw)
+  defp put_body(opts, %{body: body}) when not is_nil(body), do: Keyword.put(opts, :json, body)
+  defp put_body(opts, _req), do: opts
 end

@@ -68,6 +68,8 @@ defmodule ExLine.Client do
     * `:method` — HTTP method (default `:get`)
     * `:path` — request path appended to the host (required)
     * `:body` — request body, JSON-encoded by the adapter
+    * `:raw_body` — request body sent as-is (e.g. image bytes); requires `:content_type`
+    * `:content_type` — content type for a `:raw_body` upload
     * `:query` — query params (keyword)
     * `:host` — `:api` (default, `base_url`) or `:data` (`data_url`, for content)
     * `:retry_key` — sets the `X-Line-Retry-Key` header for idempotent retries
@@ -79,13 +81,13 @@ defmodule ExLine.Client do
   def request(%__MODULE__{} = client, opts) do
     host = if opts[:host] == :data, do: client.data_url, else: client.base_url
     path = Keyword.fetch!(opts, :path)
-    body = Keyword.get(opts, :body)
 
     req = %{
       method: Keyword.get(opts, :method, :get),
       url: host <> path,
-      headers: headers(client, body, opts[:retry_key]),
-      body: body,
+      headers: headers(client, opts),
+      body: Keyword.get(opts, :body),
+      raw_body: Keyword.get(opts, :raw_body),
       query: Keyword.get(opts, :query, [])
     }
 
@@ -105,13 +107,21 @@ defmodule ExLine.Client do
   def decode({:ok, %{status: status, body: body}}), do: {:error, Error.from_status(status, body)}
   def decode({:error, %Error{}} = error), do: error
 
-  defp headers(client, body, retry_key) do
+  defp headers(client, opts) do
     base = [{"authorization", "Bearer " <> client.access_token}]
-    base = if body, do: [{"content-type", "application/json"} | base], else: base
+    base = content_type_header(base, opts)
 
-    case retry_key do
+    case opts[:retry_key] do
       nil -> base
       key -> [{"x-line-retry-key", key} | base]
+    end
+  end
+
+  defp content_type_header(base, opts) do
+    cond do
+      opts[:raw_body] -> [{"content-type", Keyword.fetch!(opts, :content_type)} | base]
+      opts[:body] -> [{"content-type", "application/json"} | base]
+      true -> base
     end
   end
 end

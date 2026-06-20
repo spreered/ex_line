@@ -18,6 +18,7 @@ defmodule ExLine.Client.Adapter do
           url: String.t(),
           headers: [{String.t(), String.t()}],
           body: term() | nil,
+          raw_body: binary() | nil,
           query: keyword()
         }
 
