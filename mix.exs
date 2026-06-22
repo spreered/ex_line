@@ -22,7 +22,7 @@ defmodule ExLine.MixProject do
   end
 
   defp description do
-    "An unofficial Elixir client for the LINE platform (Messaging API), with " <>
+    "An Elixir client for the LINE platform (Messaging API), with " <>
       "spec-driven conformance against LINE's official OpenAPI definitions."
   end
 
