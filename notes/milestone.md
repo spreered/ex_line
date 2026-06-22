@@ -105,8 +105,23 @@
 - [x] **markMessagesAsRead / markMessagesAsReadByToken / pushMessagesByPhone**：`ExLine.Api.Messaging` `mark_as_read/2`(partner) / `mark_as_read_by_token/2` / `push_by_phone/4`(PNP, `/bot/pnp/push`)
 - [x] `validate/4`（reply/push/multicast/broadcast/narrowcast 送出前驗證,ValidateMessageRequest）
 - [x] `*_count`（reply/push/multicast/broadcast）— 已於 M2 用 `sent_count/3` 完成
-- [ ] Token provider（選配）：`ExLine.Auth.V2_1`（JWT 換發/key id/撤銷）、`ExLine.Auth.Stateless`；`ExLine.Client` 支援動態取 token（需 vendor `channel-access-token.yml`；可能需 supervision tree → 屆時補 `--sup`/`application`）
 - [ ] retry/backoff 依 endpoint rate limit 分級
+
+### M3.5 — `ExLine.Api.ChannelAccessToken`（channel access token 管理，取代原 `Auth` 命名）
+
+> 命名用官方術語 `ChannelAccessToken`（不用含糊的 `Auth`；那會跟 LINE Login 使用者 OAuth 混淆）。整份 `channel-access-token.yml` 共 8 個 endpoint，全未實作。
+> **概念**：要拿 token 得證明擁有 channel，兩種方式——client_secret（免 JWT）或 JWT assertion（私鑰簽，公鑰先在 Console「Assertion Signing Key → Register a public key」註冊拿 kid）。所有 token endpoint 都是 `application/x-www-form-urlencoded`（非 JSON）。
+
+- [ ] vendor `channel-access-token.yml`（釘 commit，納入 conformance）
+- [ ] **`ExLine.Client` 加 form-body 支援**（`form:` opt → adapter 用 `Req` 的 `form:`；所有 token endpoint 都需要，與 JSON/raw_body 並列）
+- [ ] 免 JWT 那組：`issue_stateless/2`（client_secret，`/oauth2/v3/token`）、舊版 `issue/2`（`/v2/oauth/accessToken`）、`verify/2`（`/v2/oauth/verify`）、`revoke/2`（`/v2/oauth/revoke`）
+- [ ] 加 `jose` 依賴 + assertion 簽章 helper（私鑰 + kid 簽 JWT；stateless-by-JWT 與 v2.1 共用）
+- [ ] JWT 那組：`issue_stateless/2`（JWT 模式）、`issue_jwt/2`（v2.1 `/oauth2/v2.1/token`）、`verify_jwt/2`、`revoke_jwt/2`、`key_ids/1`
+- [ ] **`ExLine.ChannelAccessToken.Cache`**（GenServer，快取 + 自動 refresh）——**由使用者放進自己的 supervision tree**；ex_line 仍是純函式庫，**不需要 `--sup`**
+- [ ] **guide**：`guides/channel_access_token.md`（加進 `mix.exs` docs `extras`）——說明 ①一次性發 token ②Cache + supervisor 設定 ③金鑰產生/Console 註冊/SDK 吃私鑰+kid ④何時用 long-lived vs stateless vs v2.1
+- [ ] conformance（issue/verify response schemas）+ mock-adapter 測試
+
+> 用不到的人：直接用 Console 長期 token（`access_token:` 固定值）即可，這整段是選配。
 
 ## M4 — Phase 3：少用
 
