@@ -3,7 +3,8 @@
 An Elixir client for the [LINE](https://developers.line.biz/) platform — Messaging
 API today, LIFF / LINE Login planned.
 
-> Unofficial. Not affiliated with or endorsed by LY Corporation.
+A runnable example app lives at
+[ex_line_demo](https://github.com/spreered/ex_line_demo).
 
 ## Design
 
