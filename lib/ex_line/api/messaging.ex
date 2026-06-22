@@ -159,6 +159,88 @@ defmodule ExLine.Api.Messaging do
   end
 
   @doc """
+  Validates message objects without sending them. `kind` is `:reply` | `:push` |
+  `:multicast` | `:broadcast` | `:narrowcast`; for `:narrowcast`, `:recipient` /
+  `:filter` / `:limit` opts are included. Returns `{:ok, _}` if valid.
+
+  Ref: https://developers.line.biz/en/reference/messaging-api/#validate-message-objects-of-push-message
+  """
+  @spec validate(
+          Client.t(),
+          :reply | :push | :multicast | :broadcast | :narrowcast,
+          messages(),
+          keyword()
+        ) ::
+          {:ok, term()} | {:error, Error.t()}
+  def validate(client, kind, messages, opts \\ [])
+      when kind in [:reply, :push, :multicast, :broadcast, :narrowcast] do
+    body =
+      %{messages: List.wrap(messages)}
+      |> maybe_put(:recipient, opts[:recipient])
+      |> maybe_put(:filter, opts[:filter])
+      |> maybe_put(:limit, opts[:limit])
+
+    client
+    |> Client.request(method: :post, path: "/v2/bot/message/validate/#{kind}", body: body)
+    |> Client.decode()
+  end
+
+  @doc """
+  Marks messages from a user as read (partner feature; requires the chat's user id).
+
+  Ref: https://developers.line.biz/en/reference/partner-docs/#mark-messages-from-users-as-read
+  """
+  @spec mark_as_read(Client.t(), String.t()) :: {:ok, term()} | {:error, Error.t()}
+  def mark_as_read(client, user_id) do
+    client
+    |> Client.request(
+      method: :post,
+      path: "/v2/bot/message/markAsRead",
+      body: %{chat: %{userId: user_id}}
+    )
+    |> Client.decode()
+  end
+
+  @doc """
+  Marks messages as read using a `markAsReadToken` from a message event.
+
+  Ref: https://developers.line.biz/en/reference/messaging-api/#mark-as-read
+  """
+  @spec mark_as_read_by_token(Client.t(), String.t()) :: {:ok, term()} | {:error, Error.t()}
+  def mark_as_read_by_token(client, token) do
+    client
+    |> Client.request(
+      method: :post,
+      path: "/v2/bot/chat/markAsRead",
+      body: %{markAsReadToken: token}
+    )
+    |> Client.decode()
+  end
+
+  @doc """
+  Sends a LINE notification message to a phone number hash (PNP; partner feature).
+  `to` is the hashed phone number. Shares push's send-result handling.
+
+  Ref: https://developers.line.biz/en/reference/partner-docs/#send-line-notification-message
+  """
+  @spec push_by_phone(Client.t(), String.t(), messages(), keyword()) ::
+          {:ok, map()} | {:error, Error.t()}
+  def push_by_phone(client, to, messages, opts \\ []) do
+    body =
+      %{to: to, messages: List.wrap(messages)}
+      |> maybe_disable_notification(opts)
+
+    client
+    |> Client.request(
+      method: :post,
+      path: "/bot/pnp/push",
+      body: body,
+      retry_key: opts[:retry_key]
+    )
+    |> handle_send()
+  end
+
+  @doc """
   Displays a loading animation in a one-on-one chat for up to `seconds` (5–60, in
   multiples of 5).
 

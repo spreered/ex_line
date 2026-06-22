@@ -59,9 +59,9 @@
 
 > **覆蓋率快照（2026-06）**：
 > - `webhook.yml`：event 19/19、content 7/7、source 3/3 → **100% 解析覆蓋**
-> - `messaging-api.yml`：endpoint 42/73（~58%）；訊息物件 **11/11**、template 4/4、action 9/9、Flex ✅
-> - 已串 endpoint：send 類(reply/push/multicast/broadcast/narrowcast+progress)、content×3、profile/followers、bot info、quota×2、sent_count×4、loading、**rich menu 全套(~23)**
-> - 未串大塊：group/room、validate*(訊息)、webhook 設定、markAsRead/pushByPhone、membership/coupon/insight/audience/accountLink（見 M3/M4）
+> - `messaging-api.yml`：endpoint ~62/73（~85%）；訊息物件 **11/11**、template 4/4、action 9/9、Flex ✅
+> - 已串：send 全套(reply/push/multicast/broadcast/narrowcast+progress/pushByPhone)、validate×5、markAsRead×2、content×3、profile/followers、bot info、quota×2、sent_count×4、loading、rich menu 全套、group/room 全套、webhook 設定
+> - 未串：membership / coupon API / insight / accountLink（M4，部分在 manage-audience.yml）
 > **待補的其他 spec**：channel-access-token.yml（M3 token）、insight.yml / manage-audience.yml（M4）、liff.yml（Plan 2）。（messaging-api.yml + webhook.yml 已 vendor）
 
 ## M2 — Phase 1：核心 API
@@ -100,10 +100,10 @@
 
 - [x] `broadcast` / `narrowcast` + narrowcast progress（`broadcast/3` 複用 `handle_send`；`narrowcast/3` 回 X-Line-Request-Id、`narrowcast_progress/2` 查狀態；recipient/filter/limit 以 opts 傳入）
 - [x] `ExLine.Api.RichMenu`：CRUD / validate / 圖片上傳下載(api-data,raw body)/ default / per-user link / bulk / alias / batch(+progress)（含 builders `rich_menu`/`size`/`area`/`bounds`;`ExLine.Client` 擴充 `raw_body`+`content_type` 支援二進位上傳）
-- [ ] `ExLine.Api.Group`：group / room summary / members / leave
-- [ ] **webhook endpoint 設定**：get / set / test（`ExLine.Api.Webhook`，與解析用的 `ExLine.Webhook` 區分）← 原本漏列
-- [ ] **markMessagesAsRead / markMessagesAsReadByToken / pushMessagesByPhone**（`ExLine.Api.Messaging`）← 原本漏列
-- [ ] `validate_*`（reply/push/multicast/narrowcast/broadcast 送出前驗證）— 優先序低（本地 conformance 已驗格式）
+- [x] `ExLine.Api.Group`：group/room summary / member count/ids(分頁)/profile / leave
+- [x] **webhook endpoint 設定**：`ExLine.Api.Webhook` get/set/test（與解析用的 `ExLine.Webhook` 區分）
+- [x] **markMessagesAsRead / markMessagesAsReadByToken / pushMessagesByPhone**：`ExLine.Api.Messaging` `mark_as_read/2`(partner) / `mark_as_read_by_token/2` / `push_by_phone/4`(PNP, `/bot/pnp/push`)
+- [x] `validate/4`（reply/push/multicast/broadcast/narrowcast 送出前驗證,ValidateMessageRequest）
 - [x] `*_count`（reply/push/multicast/broadcast）— 已於 M2 用 `sent_count/3` 完成
 - [ ] Token provider（選配）：`ExLine.Auth.V2_1`（JWT 換發/key id/撤銷）、`ExLine.Auth.Stateless`；`ExLine.Client` 支援動態取 token（需 vendor `channel-access-token.yml`；可能需 supervision tree → 屆時補 `--sup`/`application`）
 - [ ] retry/backoff 依 endpoint rate limit 分級

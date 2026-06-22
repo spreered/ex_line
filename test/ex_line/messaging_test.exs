@@ -213,9 +213,59 @@ defmodule ExLine.MessagingTest do
     end
   end
 
+  describe "validate / mark-as-read / push-by-phone" do
+    test "validate/4 posts to the validate path for the kind" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.url == "https://api.line.me/v2/bot/message/validate/push"
+        assert req.body == %{messages: [%{type: "text", text: "hi"}]}
+        {:ok, %{status: 200, body: ""}}
+      end)
+
+      assert {:ok, _} = Messaging.validate(client(), :push, Message.text("hi"))
+    end
+
+    test "mark_as_read/2 (partner) posts a chat reference" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.url == "https://api.line.me/v2/bot/message/markAsRead"
+        assert req.body == %{chat: %{userId: "U1"}}
+        {:ok, %{status: 200, body: ""}}
+      end)
+
+      assert {:ok, _} = Messaging.mark_as_read(client(), "U1")
+    end
+
+    test "mark_as_read_by_token/2 posts the token" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.url == "https://api.line.me/v2/bot/chat/markAsRead"
+        assert req.body == %{markAsReadToken: "tok-1"}
+        {:ok, %{status: 200, body: ""}}
+      end)
+
+      assert {:ok, _} = Messaging.mark_as_read_by_token(client(), "tok-1")
+    end
+
+    test "push_by_phone/4 (PNP) posts to /bot/pnp/push" do
+      expect(ExLine.AdapterMock, :request, fn req ->
+        assert req.url == "https://api.line.me/bot/pnp/push"
+        assert req.body == %{to: "phone-hash", messages: [%{type: "text", text: "hi"}]}
+        {:ok, %{status: 200, body: %{}}}
+      end)
+
+      assert {:ok, _} = Messaging.push_by_phone(client(), "phone-hash", Message.text("hi"))
+    end
+  end
+
   # Conformance of the request envelopes against LINE's official OpenAPI spec.
   describe "conformance" do
     @describetag :conformance
+
+    test "validate request → ValidateMessageRequest" do
+      assert_conforms(%{messages: [Message.text("hi")]}, "ValidateMessageRequest")
+    end
+
+    test "pnp request → PnpMessagesRequest" do
+      assert_conforms(%{to: "phone-hash", messages: [Message.text("hi")]}, "PnpMessagesRequest")
+    end
 
     test "reply request → ReplyMessageRequest" do
       assert_conforms(%{replyToken: "rt", messages: [Message.text("hi")]}, "ReplyMessageRequest")
