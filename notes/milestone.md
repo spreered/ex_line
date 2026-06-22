@@ -1,6 +1,6 @@
 # ex_line — 開發里程碑
 
-> 套件 `ex_line` / 頂層 module `ExLine`。先完成 **Messaging API**（M0–M4），再做 **LIFF**（M5–M7）。
+> 套件 `ex_line` / 頂層 module `ExLine`。先完成 **Messaging API**（M0–M4），再做 **LIFF**（M5–M7），最後處理 **Audience**（M8）。
 > 細節見 [plan_message_api.md](./plan_message_api.md) 與 [plan_liff.md](./plan_liff.md)；盤點見 [line_message_api.md](./line_message_api.md)、[line_liff.md](./line_liff.md)。
 > 勾選規則：`- [ ]` 未完成、`- [x]` 已完成。
 
@@ -130,7 +130,8 @@
 - [x] `ExLine.Api.Coupon`（coupon **管理 API**：create/list/get/close，≠ coupon message type）
 - [x] `ExLine.Api.AccountLink`（`issue_link_token/2`）
 - [x] webhook event 全型別補完（含 beacon/membership/unsend/…，已於 M2 完成）
-- [ ] `ExLine.Api.Audience`（受眾管理）— 端點在 **`manage-audience.yml`**（需另 vendor），不在 messaging-api.yml；**messaging-api.yml 已 73/73，此項屬另一 spec**
+
+> `ExLine.Api.Audience`（受眾管理）已移到 **[M8](#m8--audience受眾管理最後處理)** 最後處理（屬 `manage-audience.yml` 獨立 spec，不影響 messaging-api.yml 的 73/73）。
 
 ### ✅ Messaging API 告一段落檢查點
 
@@ -167,6 +168,22 @@
 
 - [ ] `ExLine.Liff.Apps`：`list/1` / `create/2` / `update/3` / `delete/2`（`/liff/v1/apps`，Bearer channel access token）
 - [ ] **驗收**：能對既有 LIFF app 做 CRUD
+
+---
+
+# Part 3 — 最後處理
+
+## M8 — Audience（受眾管理，最後處理）
+
+> 由 M4 移來：屬 LINE 獨立 spec **`manage-audience.yml`**（非 messaging-api.yml），與 narrowcast 分眾搭配（先建受眾群拿 `audienceGroupId`，再餵 `Messaging.narrowcast/3` 的 `recipient`）。共 12 個 endpoint。價值較低、且需另 vendor，排到最後。
+
+- [ ] vendor `manage-audience.yml`（釘 commit）+ 納入 conformance `@spec_files`
+- [ ] `ExLine.Api.Audience`：
+  - 建立：`createAudienceGroup`（上傳 user id）/ `createClickBasedAudienceGroup` / `createImpBasedAudienceGroup` / `createAudienceForUploadingUserIds`
+  - 維護：`addUserIdsToAudience` / `addAudienceToAudienceGroup` / `updateAudienceGroupDescription` / `deleteAudienceGroup`
+  - 查詢：`getAudienceGroups` / `getAudienceData` / `getSharedAudienceGroups` / `getSharedAudienceData`
+- [ ] mock-adapter 測試 + conformance（request schemas）
+- [ ] **驗收**：建立受眾群拿到 `audienceGroupId`，可直接餵 `Messaging.narrowcast/3`
 
 ---
 
