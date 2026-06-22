@@ -282,13 +282,17 @@ defmodule ExLine.Api.Messaging do
 
   @doc """
   Gets the number of messages sent on `date` (`"yyyyMMdd"`) for the given `kind`
-  (`:reply` | `:push` | `:multicast` | `:broadcast`).
+  (`:reply` | `:push` | `:multicast` | `:broadcast` | `:pnp`).
+
+  `:pnp` returns the number of sent LINE notification messages (PNP); the others
+  cover the corresponding send endpoints.
 
   Ref: https://developers.line.biz/en/reference/messaging-api/#get-number-of-reply-messages
+  Ref (PNP): https://developers.line.biz/en/reference/partner-docs/#get-number-of-sent-line-notification-messages
   """
-  @spec sent_count(Client.t(), :reply | :push | :multicast | :broadcast, String.t()) ::
+  @spec sent_count(Client.t(), :reply | :push | :multicast | :broadcast | :pnp, String.t()) ::
           {:ok, map()} | {:error, Error.t()}
-  def sent_count(client, kind, date) when kind in [:reply, :push, :multicast, :broadcast] do
+  def sent_count(client, kind, date) when kind in [:reply, :push, :multicast, :broadcast, :pnp] do
     client
     |> Client.request(
       method: :get,

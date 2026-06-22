@@ -58,12 +58,11 @@
 - [x] （outgoing builder 方向無法用 factory：builder 吃 Elixir 參數非 JSON → 留給 `line-spec-coverage` skill 做覆蓋率報告，report-only）
 
 > **覆蓋率快照（2026-06）**：
-> - **送出端 endpoint：70/81（~86%）** = `messaging-api.yml` 62/73（~85%）+ `channel-access-token.yml` 8/8（100%）
+> - **送出端 endpoint：81/81（100%）** = `messaging-api.yml` **73/73** + `channel-access-token.yml` 8/8（已 vendor 的 outgoing spec 全數實作）
 > - `webhook.yml`（接收端解析）：event 19/19、content 7/7、source 3/3 → **100% 解析覆蓋**
 > - 訊息物件 **11/11**、template 4/4、action 9/9、Flex ✅
-> - 已串：send 全套(reply/push/multicast/broadcast/narrowcast+progress/pushByPhone)、validate×5、markAsRead×2、content×3、profile/followers、bot info、quota×2、sent_count×4、loading、rich menu 全套、group/room 全套、webhook 設定、**channel access token 全套(issue/verify/revoke × v1/stateless/JWT v2.1 + key_ids)**
-> - 未串（messaging-api 11 個，皆 M4）：coupon API ×4 / membership ×3 / insight(aggregation unit) ×2 / `delivery/pnp` ×1 / accountLink(issueLinkToken) ×1
-> **待補的其他 spec**：insight.yml / manage-audience.yml（M4）、liff.yml（Plan 2）。（messaging-api.yml + webhook.yml + channel-access-token.yml 已 vendor）
+> - 已串：send 全套(reply/push/multicast/broadcast/narrowcast+progress/pushByPhone)、validate×5、markAsRead×2、content×3、profile/followers、bot info、quota×2、sent_count×5(含 pnp)、loading、rich menu 全套、group/room 全套、webhook 設定、channel access token 全套、**membership×3 / coupon×4 / insight(aggregation)×2 / accountLink(issueLinkToken)**
+> **待 vendor 的其他 spec（不在 messaging-api.yml，屬獨立產品面）**：manage-audience.yml（受眾）、insight.yml（完整統計）、liff.yml（Plan 2）。
 
 ## M2 — Phase 1：核心 API
 
@@ -126,12 +125,12 @@
 
 ## M4 — Phase 3：少用
 
-- [ ] `ExLine.Api.Audience`（受眾管理）— 端點在 **`manage-audience.yml`**（需另 vendor），不在 messaging-api.yml
-- [ ] `ExLine.Api.Insight`（統計）：`getPNPMessageStatistics` / aggregation unit（name list / usage）等
-- [ ] `ExLine.Api.Membership`：getJoinedMembershipUsers / getMembershipList / getMembershipSubscription
-- [ ] `ExLine.Api.Coupon`（coupon **管理 API**：create/close/list/detail，≠ coupon message type）
-- [ ] `ExLine.Api.AccountLink`（issueLinkToken）
+- [x] `ExLine.Api.Insight`：aggregation unit usage / name list；PNP 統計併入 `Messaging.sent_count(client, :pnp, date)`（依 skill 命名表 PNP stats 歸 Messaging）。完整 insight.yml（message events / demographics / followers 等）屬另一份未 vendor 的 spec，未做
+- [x] `ExLine.Api.Membership`：`list/1` / `subscription/2` / `joined_users/3`
+- [x] `ExLine.Api.Coupon`（coupon **管理 API**：create/list/get/close，≠ coupon message type）
+- [x] `ExLine.Api.AccountLink`（`issue_link_token/2`）
 - [x] webhook event 全型別補完（含 beacon/membership/unsend/…，已於 M2 完成）
+- [ ] `ExLine.Api.Audience`（受眾管理）— 端點在 **`manage-audience.yml`**（需另 vendor），不在 messaging-api.yml；**messaging-api.yml 已 73/73，此項屬另一 spec**
 
 ### ✅ Messaging API 告一段落檢查點
 
