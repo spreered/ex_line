@@ -58,11 +58,12 @@
 - [x] （outgoing builder 方向無法用 factory：builder 吃 Elixir 參數非 JSON → 留給 `line-spec-coverage` skill 做覆蓋率報告，report-only）
 
 > **覆蓋率快照（2026-06）**：
-> - `webhook.yml`：event 19/19、content 7/7、source 3/3 → **100% 解析覆蓋**
-> - `messaging-api.yml`：endpoint ~62/73（~85%）；訊息物件 **11/11**、template 4/4、action 9/9、Flex ✅
-> - 已串：send 全套(reply/push/multicast/broadcast/narrowcast+progress/pushByPhone)、validate×5、markAsRead×2、content×3、profile/followers、bot info、quota×2、sent_count×4、loading、rich menu 全套、group/room 全套、webhook 設定
-> - 未串：membership / coupon API / insight / accountLink（M4，部分在 manage-audience.yml）
-> **待補的其他 spec**：channel-access-token.yml（M3 token）、insight.yml / manage-audience.yml（M4）、liff.yml（Plan 2）。（messaging-api.yml + webhook.yml 已 vendor）
+> - **送出端 endpoint：70/81（~86%）** = `messaging-api.yml` 62/73（~85%）+ `channel-access-token.yml` 8/8（100%）
+> - `webhook.yml`（接收端解析）：event 19/19、content 7/7、source 3/3 → **100% 解析覆蓋**
+> - 訊息物件 **11/11**、template 4/4、action 9/9、Flex ✅
+> - 已串：send 全套(reply/push/multicast/broadcast/narrowcast+progress/pushByPhone)、validate×5、markAsRead×2、content×3、profile/followers、bot info、quota×2、sent_count×4、loading、rich menu 全套、group/room 全套、webhook 設定、**channel access token 全套(issue/verify/revoke × v1/stateless/JWT v2.1 + key_ids)**
+> - 未串（messaging-api 11 個，皆 M4）：coupon API ×4 / membership ×3 / insight(aggregation unit) ×2 / `delivery/pnp` ×1 / accountLink(issueLinkToken) ×1
+> **待補的其他 spec**：insight.yml / manage-audience.yml（M4）、liff.yml（Plan 2）。（messaging-api.yml + webhook.yml + channel-access-token.yml 已 vendor）
 
 ## M2 — Phase 1：核心 API
 
@@ -135,6 +136,7 @@
 ### ✅ Messaging API 告一段落檢查點
 
 - [ ] 文件 / `ex_doc` 產出可讀
+- [ ] **`cheatsheet.cheatmd`**：跨模組濃縮 API map（CLAUDE.md 文件規範要求；一次補齊已實作 API——Client/Message builder/Messaging/Content/Profile/Bot/Group/RichMenu/ChannelAccessToken/Webhook 接收與設定），加進 `mix.exs` docs `extras`。等 Messaging API 穩定後再做（減少同步成本）
 - [ ] 對照 hawk 既有行為驗證等價（reply/push/驗章/profile）
 - [ ] （決定後）發佈 0.1.0 到 hex.pm 或內部
 
