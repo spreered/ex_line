@@ -1,17 +1,38 @@
 defmodule ExLine.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+  @source_url "https://github.com/spreered/ex_line"
+
   def project do
     [
       app: :ex_line,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       name: "ExLine",
+      description: description(),
+      package: package(),
+      source_url: @source_url,
       docs: docs(),
       dialyzer: dialyzer()
+    ]
+  end
+
+  defp description do
+    "An unofficial Elixir client for the LINE platform (Messaging API), with " <>
+      "spec-driven conformance against LINE's official OpenAPI definitions."
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      links: %{"GitHub" => @source_url},
+      # Whitelist what ships in the hex tarball — keeps dev-only files
+      # (notes/, CLAUDE.md, .claude/, test/) out of the published package.
+      files: ~w(lib guides mix.exs README.md LICENSE)
     ]
   end
 
@@ -51,6 +72,8 @@ defmodule ExLine.MixProject do
   defp docs do
     [
       main: "readme",
+      source_url: @source_url,
+      source_ref: "v#{@version}",
       extras: ["README.md", "guides/channel_access_token.md"]
     ]
   end
