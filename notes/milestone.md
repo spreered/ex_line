@@ -109,17 +109,17 @@
 
 ### M3.5 — `ExLine.Api.ChannelAccessToken`（channel access token 管理，取代原 `Auth` 命名）
 
-> 命名用官方術語 `ChannelAccessToken`（不用含糊的 `Auth`；那會跟 LINE Login 使用者 OAuth 混淆）。整份 `channel-access-token.yml` 共 8 個 endpoint，全未實作。
+> 命名用官方術語 `ChannelAccessToken`（不用含糊的 `Auth`；那會跟 LINE Login 使用者 OAuth 混淆）。整份 `channel-access-token.yml` 共 8 個 endpoint，**已全數實作**。
 > **概念**：要拿 token 得證明擁有 channel，兩種方式——client_secret（免 JWT）或 JWT assertion（私鑰簽，公鑰先在 Console「Assertion Signing Key → Register a public key」註冊拿 kid）。所有 token endpoint 都是 `application/x-www-form-urlencoded`（非 JSON）。
 
-- [ ] vendor `channel-access-token.yml`（釘 commit，納入 conformance）
-- [ ] **`ExLine.Client` 加 form-body 支援**（`form:` opt → adapter 用 `Req` 的 `form:`；所有 token endpoint 都需要，與 JSON/raw_body 並列）
-- [ ] 免 JWT 那組：`issue_stateless/2`（client_secret，`/oauth2/v3/token`）、舊版 `issue/2`（`/v2/oauth/accessToken`）、`verify/2`（`/v2/oauth/verify`）、`revoke/2`（`/v2/oauth/revoke`）
-- [ ] 加 `jose` 依賴 + assertion 簽章 helper（私鑰 + kid 簽 JWT；stateless-by-JWT 與 v2.1 共用）
-- [ ] JWT 那組：`issue_stateless/2`（JWT 模式）、`issue_jwt/2`（v2.1 `/oauth2/v2.1/token`）、`verify_jwt/2`、`revoke_jwt/2`、`key_ids/1`
-- [ ] **`ExLine.ChannelAccessToken.Cache`**（GenServer，快取 + 自動 refresh）——**由使用者放進自己的 supervision tree**；ex_line 仍是純函式庫，**不需要 `--sup`**
-- [ ] **guide**：`guides/channel_access_token.md`（加進 `mix.exs` docs `extras`）——說明 ①一次性發 token ②Cache + supervisor 設定 ③金鑰產生/Console 註冊/SDK 吃私鑰+kid ④何時用 long-lived vs stateless vs v2.1
-- [ ] conformance（issue/verify response schemas）+ mock-adapter 測試
+- [x] vendor `channel-access-token.yml`（釘 commit `779d8ca9e632`，納入 conformance `@spec_files`）
+- [x] **`ExLine.Client` 加 form-body 支援**（`form:` opt → Req `form:`；新增 `Client.transport/1` 建立無 token 的傳輸用 client，token endpoint 不送 `Authorization`）
+- [x] 免 JWT 那組：`issue_stateless/3`（client_secret，`/oauth2/v3/token`）、舊版 `issue/3`（`/v2/oauth/accessToken`）、`verify/2`（`/v2/oauth/verify`）、`revoke/2`（`/v2/oauth/revoke`）
+- [x] 加 `jose` 依賴 + `ExLine.ChannelAccessToken.Assertion.sign/1`（私鑰[PEM/JWK] + kid 簽 RS256 JWT；stateless-by-JWT 與 v2.1 共用）
+- [x] JWT 那組：`issue_stateless_with_jwt/2`、`issue_jwt/2`（v2.1 `/oauth2/v2.1/token`）、`verify_jwt/2`、`revoke_jwt/4`、`key_ids/2`
+- [x] **`ExLine.ChannelAccessToken.Cache`**（GenServer，快取 + 自動 refresh，吃 `:issue` 函式）——**由使用者放進自己的 supervision tree**；ex_line 仍是純函式庫，**不需要 `--sup`**
+- [x] **guide**：`guides/channel_access_token.md`（已加進 `mix.exs` docs `extras`）——一次性發 token / Cache + supervisor / 金鑰產生 + Console 註冊 + SDK 吃私鑰+kid / long-lived vs stateless vs v2.1
+- [x] conformance（request form schemas）+ mock-adapter 測試（20 個新測試）
 
 > 用不到的人：直接用 Console 長期 token（`access_token:` 固定值）即可，這整段是選配。
 

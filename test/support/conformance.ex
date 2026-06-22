@@ -21,7 +21,8 @@ defmodule ExLine.Conformance do
   # (messaging-api = outgoing builders/requests; webhook = incoming events).
   @spec_files %{
     messaging: "messaging-api.yml",
-    webhook: "webhook.yml"
+    webhook: "webhook.yml",
+    channel_access_token: "channel-access-token.yml"
   }
 
   @doc """

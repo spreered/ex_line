@@ -19,6 +19,7 @@ defmodule ExLine.Client.Adapter do
           headers: [{String.t(), String.t()}],
           body: term() | nil,
           raw_body: binary() | nil,
+          form: keyword() | map() | nil,
           query: keyword()
         }
 

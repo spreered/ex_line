@@ -27,7 +27,7 @@ defmodule ExLine.Client do
             retry: []
 
   @type t :: %__MODULE__{
-          access_token: String.t(),
+          access_token: String.t() | nil,
           channel_id: String.t() | nil,
           adapter: module(),
           base_url: String.t(),
@@ -61,6 +61,25 @@ defmodule ExLine.Client do
   end
 
   @doc """
+  Builds a **transport-only** client with no access token.
+
+  The channel-access-token endpoints (`ExLine.Api.ChannelAccessToken`) authenticate
+  with the channel id/secret or a signed JWT assertion — not a Bearer token — so
+  they need the adapter/host configuration but not an `access_token`. Use this to
+  obtain a token before you can build a normal client:
+
+      iex> client = ExLine.Client.transport()
+      iex> client.access_token
+      nil
+      iex> client.base_url
+      "https://api.line.me"
+  """
+  @spec transport(keyword() | map()) :: t()
+  def transport(opts \\ []) do
+    struct!(__MODULE__, Enum.into(opts, %{access_token: nil}))
+  end
+
+  @doc """
   Performs a request against the LINE API.
 
   Options:
@@ -70,6 +89,8 @@ defmodule ExLine.Client do
     * `:body` — request body, JSON-encoded by the adapter
     * `:raw_body` — request body sent as-is (e.g. image bytes); requires `:content_type`
     * `:content_type` — content type for a `:raw_body` upload
+    * `:form` — request body sent as `application/x-www-form-urlencoded` (used by the
+      OAuth/token endpoints)
     * `:query` — query params (keyword)
     * `:host` — `:api` (default, `base_url`) or `:data` (`data_url`, for content)
     * `:retry_key` — sets the `X-Line-Retry-Key` header for idempotent retries
@@ -88,6 +109,7 @@ defmodule ExLine.Client do
       headers: headers(client, opts),
       body: Keyword.get(opts, :body),
       raw_body: Keyword.get(opts, :raw_body),
+      form: Keyword.get(opts, :form),
       query: Keyword.get(opts, :query, [])
     }
 
@@ -108,7 +130,7 @@ defmodule ExLine.Client do
   def decode({:error, %Error{}} = error), do: error
 
   defp headers(client, opts) do
-    base = [{"authorization", "Bearer " <> client.access_token}]
+    base = auth_header(client)
     base = content_type_header(base, opts)
 
     case opts[:retry_key] do
@@ -117,9 +139,15 @@ defmodule ExLine.Client do
     end
   end
 
+  # Token endpoints use a transport-only client (no access_token) — they
+  # authenticate via the request body, so no Authorization header is sent.
+  defp auth_header(%{access_token: nil}), do: []
+  defp auth_header(%{access_token: token}), do: [{"authorization", "Bearer " <> token}]
+
   defp content_type_header(base, opts) do
     cond do
       opts[:raw_body] -> [{"content-type", Keyword.fetch!(opts, :content_type)} | base]
+      opts[:form] -> [{"content-type", "application/x-www-form-urlencoded"} | base]
       opts[:body] -> [{"content-type", "application/json"} | base]
       true -> base
     end

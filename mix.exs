@@ -31,6 +31,9 @@ defmodule ExLine.MixProject do
     [
       {:req, "~> 0.5"},
       {:jason, "~> 1.4"},
+      # JWT signing for the channel-access-token JWT-assertion / v2.1 endpoints
+      # (ExLine.ChannelAccessToken.Assertion). Pure-Elixir, no native build.
+      {:jose, "~> 1.11"},
       # Plug is only needed for ExLine.Webhook.Plug / BodyReader; keep it optional
       # so non-Plug consumers (CLI, scripts) are not forced to pull it in.
       {:plug, "~> 1.16", optional: true},
@@ -48,7 +51,7 @@ defmodule ExLine.MixProject do
   defp docs do
     [
       main: "readme",
-      extras: ["README.md"]
+      extras: ["README.md", "guides/channel_access_token.md"]
     ]
   end
 
@@ -58,7 +61,7 @@ defmodule ExLine.MixProject do
     [
       plt_local_path: "priv/plts",
       plt_core_path: "priv/plts",
-      plt_add_apps: [:plug],
+      plt_add_apps: [:plug, :jose],
       flags: [:error_handling, :extra_return, :missing_return, :unknown]
     ]
   end

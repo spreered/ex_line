@@ -3,7 +3,8 @@
 Source of truth for conformance tests (`ExLine.Conformance`).
 
 - Origin: <https://github.com/line/line-openapi>
-- Files: `messaging-api.yml` (outgoing builders/requests), `webhook.yml` (incoming events)
+- Files: `messaging-api.yml` (outgoing builders/requests), `webhook.yml` (incoming events),
+  `channel-access-token.yml` (token issue/verify/revoke)
 - Pinned commit: `779d8ca9e632` (2026-04-13)
 
 ## Updating
@@ -12,7 +13,7 @@ Re-vendor and let the conformance tests re-check our output against the new spec
 
 ```sh
 COMMIT=<new-commit-sha>
-for f in messaging-api.yml webhook.yml; do
+for f in messaging-api.yml webhook.yml channel-access-token.yml; do
   curl -s "https://raw.githubusercontent.com/line/line-openapi/$COMMIT/$f" \
     -o "test/support/line_openapi/$f"
 done

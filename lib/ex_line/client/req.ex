@@ -22,8 +22,10 @@ defmodule ExLine.Client.Req do
     end
   end
 
-  # raw_body (e.g. image bytes) is sent as-is; otherwise body is JSON-encoded.
+  # raw_body (e.g. image bytes) is sent as-is; form is URL-encoded
+  # (application/x-www-form-urlencoded); otherwise body is JSON-encoded.
   defp put_body(opts, %{raw_body: raw}) when not is_nil(raw), do: Keyword.put(opts, :body, raw)
+  defp put_body(opts, %{form: form}) when not is_nil(form), do: Keyword.put(opts, :form, form)
   defp put_body(opts, %{body: body}) when not is_nil(body), do: Keyword.put(opts, :json, body)
   defp put_body(opts, _req), do: opts
 end
