@@ -161,10 +161,16 @@ router DSL; the controller is yours. The flow is: **verify → parse → route �
 return 200**. `parse/1` turns the request body into a list of `ExLine.Webhook`
 event structs, and you hand each one to your router's `call/2`:
 
-The raw body is needed to verify the signature, but Phoenix's `Plug.Parsers`
-(in your **Endpoint**) consumes it first. So add the `body_reader` to the
-`Plug.Parsers` your Endpoint *already* defines — don't add a second one in the
-router (by the time the router runs, the body is already parsed):
+Signature verification has to use the **exact bytes** LINE sent. You can't re-encode
+the parsed payload instead — JSON → map → JSON can reorder keys and change
+whitespace, so it would no longer match the signature. But Phoenix's `Plug.Parsers`
+(in your **Endpoint**) both parses *and* consumes the body, so the original bytes are
+gone by the time your controller runs.
+
+`ExLine.Webhook.BodyReader` solves this: it keeps an untouched copy of the body in
+`conn.assigns[:raw_body]` while the parser runs. Add it as the `body_reader` on the
+`Plug.Parsers` your Endpoint *already* defines — don't add a second `Plug.Parsers`
+in the router (by the time the router runs, the body is already parsed):
 
 ```elixir
 # lib/my_app_web/endpoint.ex — the Plug.Parsers Phoenix generated, with body_reader added
