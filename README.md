@@ -124,6 +124,10 @@ plug Plug.Parsers,
 plug ExLine.Webhook.Plug, secret: &MyApp.line_secret/1
 ```
 
+This is the framework-agnostic form (one `Plug` pipeline owns both the parser and
+the verification). In **Phoenix** the parser lives in your Endpoint, not here — see
+[Wiring it together (Phoenix)](#wiring-it-together-phoenix).
+
 ## Routing events
 
 ```elixir
@@ -157,15 +161,27 @@ router DSL; the controller is yours. The flow is: **verify → parse → route �
 return 200**. `parse/1` turns the request body into a list of `ExLine.Webhook`
 event structs, and you hand each one to your router's `call/2`:
 
+The raw body is needed to verify the signature, but Phoenix's `Plug.Parsers`
+(in your **Endpoint**) consumes it first. So add the `body_reader` to the
+`Plug.Parsers` your Endpoint *already* defines — don't add a second one in the
+router (by the time the router runs, the body is already parsed):
+
+```elixir
+# lib/my_app_web/endpoint.ex — the Plug.Parsers Phoenix generated, with body_reader added
+plug Plug.Parsers,
+  parsers: [:urlencoded, :multipart, :json],
+  pass: ["*/*"],
+  body_reader: {ExLine.Webhook.BodyReader, :read_body, []},
+  json_decoder: Phoenix.json_library()
+```
+
+The router pipeline then only verifies the signature; the parsing already happened
+in the Endpoint:
+
 ```elixir
 # lib/my_app_web/router.ex
 pipeline :line_webhook do
-  plug Plug.Parsers,
-    parsers: [:json],
-    body_reader: {ExLine.Webhook.BodyReader, :read_body, []},
-    json_decoder: Jason
-
-  # rejects requests whose x-line-signature doesn't match (see "Receiving webhooks")
+  # rejects requests whose x-line-signature doesn't match the cached raw body (401)
   plug ExLine.Webhook.Plug, secret: &MyApp.line_secret/1
 end
 
@@ -174,6 +190,13 @@ scope "/line", MyAppWeb do
   post "/webhook", WebhookController, :handle
 end
 ```
+
+> `BodyReader` caches the raw body (a cheap prepend into `conn.assigns[:raw_body]`)
+> for **every** request, since the Endpoint's parser is global — the same approach
+> Stripe-style webhook verification uses in Phoenix. If you'd rather not cache
+> globally, run a bare `Plug` pipeline scoped to the webhook path with its own
+> `Plug.Parsers` + `ExLine.Webhook.Plug` instead (the framework-agnostic form shown
+> under [Receiving webhooks](#receiving-webhooks)).
 
 ```elixir
 # lib/my_app_web/controllers/webhook_controller.ex
