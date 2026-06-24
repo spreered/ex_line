@@ -134,23 +134,26 @@ the verification). In **Phoenix** the parser lives in your Endpoint, not here â€
 defmodule MyApp.LineRouter do
   use ExLine.EventRouter
 
-  text "hello", MyApp.HelpHandler, :hello
-  postback "buy", MyApp.ShopHandler, :buy
-  follow MyApp.OnboardHandler, :welcome
-  default MyApp.FallbackHandler, :unknown
+  text "hi", MyApp.Handler, :hi
+  default MyApp.Handler, :fallback   # required catch-all (also catches unknown events)
+  # other matchers: message :image, postback "buy", follow, unfollow, join, ...
 
+  # before_action runs before each match; here it stashes a client for handlers to use.
   @impl true
   def before_action(event, assigns), do: {event, Map.put(assigns, :client, MyApp.client())}
 end
 
-defmodule MyApp.HelpHandler do
-  use ExLine.EventHandler
+defmodule MyApp.Handler do
+  use ExLine.EventHandler   # imports ExLine.Message, so `text/1` is in scope
 
+  # someone sends "hi" -> reply "hello"
   @impl true
-  def handle_event(:hello, %{"replyToken" => token}, %{client: client}) do
-    ExLine.Api.Messaging.reply(client, token, text("Need help?"))
+  def handle_event(:hi, %{"replyToken" => token}, %{client: client}) do
+    ExLine.Api.Messaging.reply(client, token, text("hello"))
     :ok
   end
+
+  def handle_event(:fallback, _event, _assigns), do: :ok
 end
 ```
 
@@ -185,10 +188,18 @@ The router pipeline then only verifies the signature; the parsing already happen
 in the Endpoint:
 
 ```elixir
+# config/runtime.exs
+config :my_app, :line_channel_secret, System.fetch_env!("LINE_CHANNEL_SECRET")
+```
+
+```elixir
 # lib/my_app_web/router.ex
 pipeline :line_webhook do
-  # rejects requests whose x-line-signature doesn't match the cached raw body (401)
-  plug ExLine.Webhook.Plug, secret: &MyApp.line_secret/1
+  # Verifies x-line-signature against the cached raw body (401 on mismatch).
+  # Wrap the secret in a fn so it's read at request time â€” router plug options are
+  # evaluated at compile time, so don't read config/env directly here.
+  plug ExLine.Webhook.Plug,
+    secret: fn _conn -> Application.fetch_env!(:my_app, :line_channel_secret) end
 end
 
 scope "/line", MyAppWeb do
