@@ -148,9 +148,70 @@ defmodule MyApp.HelpHandler do
     :ok
   end
 end
+```
 
-# in your webhook controller, for each event:
-MyApp.LineRouter.call(event, %{})
+## Wiring it together (Phoenix)
+
+The SDK gives you the verify plug, the parser (`ExLine.Webhook.parse/1`), and the
+router DSL; the controller is yours. The flow is: **verify → parse → route →
+return 200**. `parse/1` turns the request body into a list of `ExLine.Webhook`
+event structs, and you hand each one to your router's `call/2`:
+
+```elixir
+# lib/my_app_web/router.ex
+pipeline :line_webhook do
+  plug Plug.Parsers,
+    parsers: [:json],
+    body_reader: {ExLine.Webhook.BodyReader, :read_body, []},
+    json_decoder: Jason
+
+  # rejects requests whose x-line-signature doesn't match (see "Receiving webhooks")
+  plug ExLine.Webhook.Plug, secret: &MyApp.line_secret/1
+end
+
+scope "/line", MyAppWeb do
+  pipe_through :line_webhook
+  post "/webhook", WebhookController, :handle
+end
+```
+
+```elixir
+# lib/my_app_web/controllers/webhook_controller.ex
+defmodule MyAppWeb.WebhookController do
+  use MyAppWeb, :controller
+
+  def handle(conn, params) do
+    params
+    |> ExLine.Webhook.parse()
+    |> Enum.each(&MyApp.LineRouter.call(&1, %{}))
+
+    # Always 200 so LINE doesn't retry; the plug already rejected bad signatures.
+    send_resp(conn, 200, "")
+  end
+end
+```
+
+LINE expects a prompt `200` and **retries on timeout**, so keep the request fast.
+For handlers that do slow work (network calls, DB writes), process the events in a
+supervised task and return `200` immediately — this also isolates a failing event
+from the rest of the batch:
+
+```elixir
+def handle(conn, params) do
+  events = ExLine.Webhook.parse(params)
+
+  Task.Supervisor.start_child(MyApp.TaskSupervisor, fn ->
+    Enum.each(events, fn event ->
+      try do
+        MyApp.LineRouter.call(event, %{})
+      rescue
+        e -> Logger.error("LINE event failed: #{Exception.message(e)}")
+      end
+    end)
+  end)
+
+  send_resp(conn, 200, "")
+end
 ```
 
 ## Testing
