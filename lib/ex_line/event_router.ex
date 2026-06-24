@@ -43,6 +43,10 @@ defmodule ExLine.EventRouter do
       # In your webhook controller (after ExLine.Webhook.Signature has verified it):
       params["events"] |> ExLine.Webhook.parse() |> Enum.each(&MyApp.LineRouter.call/1)
 
+  For the full Phoenix controller/router wiring (verify → parse → route → 200,
+  including the supervised-task pattern for slow handlers), see
+  [Wiring it together (Phoenix)](readme.html#wiring-it-together-phoenix) in the README.
+
   Because LINE adds event types without notice (and unknown types become
   `ExLine.Webhook.Event.Unknown`), always declare a `default/2` route so unmatched
   events never raise.
